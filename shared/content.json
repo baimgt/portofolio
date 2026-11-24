@@ -1,0 +1,323 @@
+{
+  "profile": {
+    "name": "Vano",
+    "firstName": "Vano",
+    "brand": "vano",
+    "role": "Creative Developer",
+    "location": "Indonesia",
+    "available": true,
+    "portrait": "/images/portrait.webp",
+    "portraitHover": "/images/portrait-symbiote.webp",
+    "intro": "Memadukan desain, kode, dan sedikit rasa penasaran untuk menciptakan pengalaman digital yang berkesan.",
+    "about": "Saya creative developer yang percaya bahwa website yang baik bukan hanya tentang bagaimana ia terlihat, tapi juga bagaimana ia terasa. Saya merangkai desain yang thoughtful dengan teknologi web modern.",
+    "aboutMore": "Dari ide pertama sampai interaksi terkecil, saya menikmati setiap proses mengubah hal yang kompleks menjadi pengalaman yang sederhana, intuitif, dan punya karakter.",
+    "email": "hello@vano.dev",
+    "github": "https://github.com/",
+    "instagram": "https://www.instagram.com/",
+    "linkedin": "https://www.linkedin.com/"
+  },
+  "pages": {
+    "heroGreeting": "Hi, I'm",
+    "heroLineOne": "Creative",
+    "heroLineTwo": "Developer.",
+    "heroEyebrow": "A LITTLE DESIGN. A LITTLE CODE. A LOT OF CURIOSITY.",
+    "aboutTitle": "More than just code.",
+    "aboutHeadline": "A curious mind.\nA maker at heart.",
+    "educationTitle": "The journey so far.",
+    "educationDescription": "Setiap langkah menyimpan pelajaran. Ini beberapa tempat di mana rasa penasaran saya mulai tumbuh.",
+    "frameworksTitle": "My everyday toolkit.",
+    "frameworksDescription": "Teknologi yang saya pilih untuk mengubah ide menjadi pengalaman. Pilih satu untuk mengenalnya lebih dekat.",
+    "skillsTitle": "Good ideas.\nBuilt right.",
+    "projectsTitle": "Selected work.",
+    "projectsDescription": "Beberapa ide yang sudah menemukan bentuknya. Dibuat dengan hati, dirapikan sampai detail terakhir.",
+    "contactTitle": "Have an idea?\nLet's make it real.",
+    "contactDescription": "Punya project menarik atau sekadar ingin menyapa? Saya selalu terbuka untuk percakapan yang baik.",
+    "footerNote": "Thoughtfully designed. Carefully developed."
+  },
+  "card": {
+    "heading": "INDEPENDENT",
+    "roleText": "",
+    "mark": "*",
+    "titleLineOne": "CREATIVE",
+    "titleLineTwo": "DEVELOPER",
+    "editionLabel": "EST.",
+    "editionYear": "2024",
+    "portrait": "",
+    "portraitHover": "",
+    "photoCaption": "ALWAYS A WORK IN PROGRESS.",
+    "displayName": "",
+    "identifier": "01 / IDN",
+    "footerLineOne": "DESIGN WITH INTENTION.",
+    "footerLineTwo": "BUILD WITH CURIOSITY.",
+    "strapText": "DESIGN + CODE + CURIOSITY",
+    "brandText": "",
+    "logoImage": "",
+    "signatureText": "Vano",
+    "signatureImage": "",
+    "accentColor": "#437bf0",
+    "paperColor": "#deded0",
+    "dragHint": "Tarik kartunya. Ada sedikit cerita di setiap gerakan.",
+    "keyboardHint": "Drag / arrow keys. Home to reset.",
+    "resetLabel": "Reset posisi kartu"
+  },
+  "copy": {
+    "navHome": "Home",
+    "navAbout": "About",
+    "navProjects": "Projects",
+    "navContact": "Contact",
+    "heroExplore": "Explore my work",
+    "heroContact": "Let's talk",
+    "findMe": "FIND ME ON",
+    "scrollLabel": "SCROLL TO EXPLORE",
+    "heroLocationLabel": "INDEPENDENT. BASED IN",
+    "aboutEyebrow": "THE PERSON BEHIND THE PIXELS",
+    "aboutSmallGreeting": "A little about me",
+    "aboutMeet": "Nice to meet you",
+    "aboutLearning": "Always learning. Always creating.",
+    "aboutToolkit": "A look at my toolkit",
+    "educationEyebrow": "EDUCATION & GROWTH",
+    "skillsEyebrow": "WHAT I BRING TO THE TABLE",
+    "skillsDescription": "Desain yang punya arah.\nKode yang punya tujuan.",
+    "frameworksEyebrow": "THE TOOLS BEHIND THE WORK",
+    "projectsEyebrow": "A FEW THINGS I'VE MADE",
+    "filterAll": "All projects",
+    "filterWeb": "Web Development",
+    "filterDesign": "UI/UX Design",
+    "projectsFootnote": "Good work comes from good conversations.",
+    "projectsConversation": "Let's start one",
+    "contactEyebrow": "LET'S CREATE SOMETHING GOOD",
+    "contactAvailable": "Open for thoughtful collaborations",
+    "contactBusy": "Currently focused on ongoing projects",
+    "contactFormIntro": "Tell me a little about your idea.",
+    "contactName": "Nama kamu",
+    "contactNamePlaceholder": "Siapa nama kamu?",
+    "contactEmail": "Alamat email",
+    "contactEmailPlaceholder": "hello@you.com",
+    "contactMessage": "Apa yang sedang kamu pikirkan?",
+    "contactMessagePlaceholder": "Ceritakan ide, project, atau sekadar bilang halo...",
+    "contactPrivacy": "No spam. Just good conversations.",
+    "contactSubmit": "Kirim pesan",
+    "contactSending": "Mengirim...",
+    "contactSuccessEyebrow": "IT STARTS WITH A HELLO",
+    "contactSuccessTitle": "Pesanmu sudah masuk.",
+    "contactSuccessBody": "Terima kasih sudah menyapa. Saya akan membalas lewat email yang kamu berikan.",
+    "contactAnother": "Kirim pesan lainnya",
+    "footerSignoff": "ALWAYS CURIOUS.\nALWAYS CREATING.",
+    "footerCredit": "Designed & built with intention.",
+    "footerAdmin": "Studio access",
+    "loadingCaption": "A LITTLE PATIENCE. GOOD THINGS ARE COMING.",
+    "projectBack": "Back to selected work",
+    "projectConcept": "Independent concept project",
+    "projectIdea": "THE IDEA",
+    "projectIdeaTitle": "Thoughtfully imagined.\nCarefully brought to life.",
+    "projectApproach": "The approach",
+    "projectUpNext": "UP NEXT",
+    "galleryLabel": "Take a closer look",
+    "projectView": "VIEW PROJECT",
+    "projectEmpty": "Belum ada project di kategori ini. Nantikan karya selanjutnya.",
+    "projectDiscipline": "THE DISCIPLINE",
+    "projectToolkit": "THE TOOLKIT",
+    "projectYear": "THE YEAR",
+    "projectVisit": "Visit website"
+  },
+  "education": [
+    {
+      "id": "university",
+      "school": "Universitas Nusantara",
+      "degree": "S1 Teknik Informatika",
+      "period": "2021 - 2025",
+      "location": "Indonesia",
+      "description": "Mendalami rekayasa perangkat lunak, interaksi manusia dan komputer, serta merangkai ide menjadi produk digital.",
+      "logo": ""
+    },
+    {
+      "id": "high-school",
+      "school": "SMK Teknologi Nusantara",
+      "degree": "Rekayasa Perangkat Lunak",
+      "period": "2018 - 2021",
+      "location": "Indonesia",
+      "description": "Tempat saya menulis baris kode pertama dan mulai jatuh hati pada desain serta pengembangan web.",
+      "logo": ""
+    },
+    {
+      "id": "middle-school",
+      "school": "SMP Nusantara",
+      "degree": "Sekolah Menengah Pertama",
+      "period": "2015 - 2018",
+      "location": "Indonesia",
+      "description": "Langkah awal untuk bertanya, mencoba hal baru, dan menemukan rasa penasaran yang tidak pernah berhenti.",
+      "logo": ""
+    }
+  ],
+  "frameworks": [
+    {
+      "id": "react",
+      "name": "React",
+      "category": "UI LIBRARY",
+      "description": "Antarmuka yang terasa hidup, dirangkai dari komponen yang reusable dan mudah dikembangkan.",
+      "symbol": "react",
+      "logo": ""
+    },
+    {
+      "id": "nextjs",
+      "name": "Next.js",
+      "category": "REACT FRAMEWORK",
+      "description": "Fondasi aplikasi full-stack dengan routing, rendering, dan performa yang dipikirkan dari awal.",
+      "symbol": "nextjs",
+      "logo": ""
+    },
+    {
+      "id": "typescript",
+      "name": "TypeScript",
+      "category": "TYPED JAVASCRIPT",
+      "description": "Kode yang lebih jelas, aman, dan menyenangkan untuk dirawat seiring produk berkembang.",
+      "symbol": "typescript",
+      "logo": ""
+    },
+    {
+      "id": "tailwind",
+      "name": "Tailwind CSS",
+      "category": "CSS FRAMEWORK",
+      "description": "Sistem styling yang konsisten untuk menerjemahkan detail desain ke berbagai ukuran layar.",
+      "symbol": "tailwind",
+      "logo": ""
+    },
+    {
+      "id": "gsap",
+      "name": "GSAP",
+      "category": "MOTION ENGINE",
+      "description": "Choreography yang halus, dari micro-interaction kecil sampai pengalaman scroll yang sinematik.",
+      "symbol": "gsap",
+      "logo": ""
+    },
+    {
+      "id": "nodejs",
+      "name": "Node.js",
+      "category": "SERVER RUNTIME",
+      "description": "Menghubungkan pengalaman visual dengan data, autentikasi, dan fondasi server yang dapat diandalkan.",
+      "symbol": "nodejs",
+      "logo": ""
+    }
+  ],
+  "skills": [
+    {
+      "id": "frontend",
+      "title": "Creative Development",
+      "description": "Website yang cepat, responsif, dan menyenangkan untuk digunakan. Dibangun dengan fondasi kode yang solid.",
+      "tools": [
+        "React",
+        "TypeScript",
+        "Next.js",
+        "Tailwind CSS"
+      ]
+    },
+    {
+      "id": "design",
+      "title": "UI/UX Design",
+      "description": "Menerjemahkan kebutuhan menjadi antarmuka yang intuitif, dengan visual yang jernih dan karakter yang kuat.",
+      "tools": [
+        "Figma",
+        "Design Systems",
+        "Prototyping",
+        "User Experience"
+      ]
+    },
+    {
+      "id": "motion",
+      "title": "Motion & Interaction",
+      "description": "Interaksi yang memberi karakter. Gerakan yang punya tujuan, bukan sekadar hiasan.",
+      "tools": [
+        "GSAP",
+        "ScrollTrigger",
+        "Lenis",
+        "CSS Animation"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "id": "forma",
+      "slug": "forma-studio",
+      "title": "Forma Studio",
+      "category": "Web Development",
+      "year": "2025",
+      "summary": "Ruang digital untuk studio arsitektur yang merayakan kesederhanaan.",
+      "description": "Eksplorasi konsep website studio arsitektur dengan pendekatan editorial. Forma memadukan fotografi ruang yang hangat, tipografi yang tenang, dan transisi yang mengalir untuk menghadirkan pengalaman melihat arsitektur yang lebih personal.",
+      "challenge": "Membuat karya arsitektur menjadi pusat perhatian tanpa mengorbankan navigasi yang intuitif. Sistem layout yang fleksibel menjaga setiap proyek memiliki ruang untuk bercerita.",
+      "image": "/images/project-forma.webp",
+      "gallery": [
+        "/images/interior.webp"
+      ],
+      "tools": [
+        "React",
+        "GSAP",
+        "Tailwind CSS"
+      ],
+      "url": "",
+      "featured": true
+    },
+    {
+      "id": "orbit",
+      "slug": "orbit-dashboard",
+      "title": "Orbit Dashboard",
+      "category": "UI/UX Design",
+      "year": "2025",
+      "summary": "Data yang kompleks, dalam pengalaman yang terasa sederhana.",
+      "description": "Konsep dashboard analitik untuk membantu tim melihat gambaran besar dengan lebih jernih. Orbit menempatkan data yang penting di depan dan menghadirkan visualisasi yang mudah dipahami tanpa terasa penuh.",
+      "challenge": "Menyusun banyak informasi ke dalam hierarki yang mudah dipindai, dengan sistem komponen yang konsisten dan tampilan gelap yang nyaman digunakan setiap hari.",
+      "image": "/images/project-orbit.webp",
+      "gallery": [],
+      "tools": [
+        "Figma",
+        "Design System",
+        "Prototyping"
+      ],
+      "url": "",
+      "featured": true
+    },
+    {
+      "id": "botanique",
+      "slug": "maison-botanique",
+      "title": "Maison Botanique",
+      "category": "Web Development",
+      "year": "2025",
+      "summary": "Sebuah cerita tentang perawatan diri, disampaikan secara natural.",
+      "description": "Konsep e-commerce untuk brand perawatan kulit dengan filosofi less, but better. Palet yang hangat, fotografi yang jujur, dan alur belanja yang ringkas dirangkai menjadi pengalaman yang tenang.",
+      "challenge": "Menyatukan storytelling brand dengan alur belanja yang efisien. Interaksi mikro memberi umpan balik yang jelas tanpa mengganggu fokus pada produk.",
+      "image": "/images/project-botanique.webp",
+      "gallery": [
+        "/images/skincare.webp"
+      ],
+      "tools": [
+        "Next.js",
+        "TypeScript",
+        "GSAP"
+      ],
+      "url": "",
+      "featured": true
+    },
+    {
+      "id": "wave",
+      "slug": "wave-music",
+      "title": "Wave Music",
+      "category": "UI/UX Design",
+      "year": "2025",
+      "summary": "Menemukan soundtrack baru untuk setiap momen.",
+      "description": "Eksplorasi antarmuka platform musik independen. Wave mengutamakan penemuan musik, sampul album yang ekspresif, dan pengalaman pemutaran yang tidak menghalangi eksplorasi.",
+      "challenge": "Merancang sistem visual yang dapat mengakomodasi banyak genre musik sambil tetap terasa konsisten, personal, dan mudah dijelajahi.",
+      "image": "/images/project-wave.webp",
+      "gallery": [],
+      "tools": [
+        "Figma",
+        "UI Design",
+        "Interaction Design"
+      ],
+      "url": "",
+      "featured": false
+    }
+  ],
+  "settings": {
+    "languageMode": false,
+    "language": "id"
+  }
+}
