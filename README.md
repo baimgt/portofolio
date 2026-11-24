@@ -14,6 +14,8 @@ npm run dev
 Buka `http://localhost:5173`. Website, API, upload, dan admin berjalan pada origin yang sama. Jangan menjalankan Vite secara terpisah karena API disediakan oleh `server/index.mjs`.
 
 ## Studio Admin
+<img width="2556" height="1182" alt="image" src="https://github.com/user-attachments/assets/fe82e4c0-8f3f-4e48-be44-acec4d6fc60e" />
+
 
 Buka `/admin`. Login awal memakai akun bawaan (lihat `INITIAL_ADMIN_PASSWORD` di server). Ganti password melalui menu **Keamanan** sebelum publikasi. Password di-hash, sesi disimpan di server, dan perubahan konten tetap dilindungi CSRF. Password yang sudah pernah diubah tidak direset oleh pembaruan aplikasi.
 
