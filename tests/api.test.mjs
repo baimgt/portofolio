@@ -43,7 +43,7 @@ test('Portfolio API: authentication, persistence, project CRUD, uploads, and inb
     await t.test('Public content is available, private content is not', async () => {
       const content = await request('/content', { anonymous: true });
       assert.equal(content.status, 200);
-      assert.equal(content.body.profile.firstName, 'Vano');
+      assert.equal(content.body.profile.firstName, 'Baim');
       saved = content.body;
       assert.equal((await request('/admin/messages', { anonymous: true })).status, 401);
       const me = await request('/auth/me');
@@ -112,13 +112,13 @@ test('Portfolio API: authentication, persistence, project CRUD, uploads, and inb
       const invalid = structuredClone(saved);
       invalid.profile.github = 'javascript:alert(1)';
       assert.equal((await request('/admin/content', { method: 'PUT', body: invalid })).status, 400);
-      saved.profile.name = 'Vano Persistence Test';
+      saved.profile.name = 'Baim Persistence Test';
       saved.pages.footerNote = 'Stored on the server.';
       const update = await request('/admin/content', { method: 'PUT', body: saved });
       assert.equal(update.status, 200);
       assert.equal(
         (await request('/content', { anonymous: true })).body.profile.name,
-        'Vano Persistence Test',
+        'Baim Persistence Test',
       );
     });
     await t.test(
@@ -252,7 +252,7 @@ test('Portfolio API: authentication, persistence, project CRUD, uploads, and inb
       await listen();
       assert.equal(
         (await request('/content', { anonymous: true })).body.profile.name,
-        'Vano Persistence Test',
+        'Baim Persistence Test',
       );
       const persisted = (await request('/content', { anonymous: true })).body;
       assert.equal(persisted.education[0].school, 'Server School');

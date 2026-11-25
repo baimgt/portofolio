@@ -18,7 +18,7 @@ const pass = (message) => console.log(`PASS ${message}`);
 try {
   await page.goto(base, { waitUntil: 'networkidle' });
   await expect(page.locator('.page-loader')).toHaveCount(0);
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Vano');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Baim');
   await page.getByRole('link', { name: 'Explore my work' }).click();
   await page.getByRole('tab', { name: 'UI/UX Design' }).click();
   await expect(page.locator('.project-card')).toHaveCount(2);
@@ -61,7 +61,7 @@ try {
   await page.goto(`${base}/admin`, { waitUntil: 'networkidle' });
   await page.getByLabel('Password', { exact: true }).fill('admin');
   await page.getByRole('button', { name: 'Enter the studio' }).click();
-  await expect(page.getByRole('heading', { name: 'Hello, Vano.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Hello, Baim.' })).toBeVisible();
   await page.screenshot({ path: 'artifacts/admin-dashboard.png' });
   pass('Basic admin/admin login opens the dashboard directly');
   await page.getByRole('button', { name: 'Keamanan', exact: true }).click();

@@ -142,13 +142,13 @@ try {
   await page.goto(`${base}/admin`, { waitUntil: 'networkidle' });
   await page.getByLabel('Password', { exact: true }).fill('admin');
   await page.getByRole('button', { name: 'Enter the studio' }).click();
-  await expect(page.getByRole('heading', { name: 'Hello, Vano.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Hello, Baim.' })).toBeVisible();
   await page.getByRole('button', { name: 'Kartu identitas', exact: true }).click();
   await page.getByLabel('Judul kartu: baris pertama', { exact: true }).fill('DIGITAL');
   await page.getByLabel('Judul kartu: baris kedua', { exact: true }).fill('MAKER');
   await page.getByLabel('Tahun pada kartu', { exact: true }).fill('2026');
   await page.getByLabel('Teks pada tali', { exact: true }).fill('BUILD + LEARN');
-  await page.getByLabel('Teks tanda tangan', { exact: true }).fill('Vano Studio');
+  await page.getByLabel('Teks tanda tangan', { exact: true }).fill('Baim Studio');
   await page
     .getByLabel('Unggah foto dalam kartu', { exact: true })
     .setInputFiles('public/images/portrait.webp');
@@ -250,7 +250,7 @@ try {
   );
   await expect(publicPage.locator('.badge-photo .signature-mark')).toHaveAttribute(
     'aria-label',
-    'Tanda tangan Vano Studio',
+    'Tanda tangan Baim Studio',
   );
   await expect(
     publicPage.getByRole('heading', { name: 'Sekolah Browser', exact: true }),

@@ -1078,7 +1078,7 @@ export default function Admin({
                         onChange={(event) => updateProfile('firstName', event.target.value)}
                       />
                     </Field>
-                    <Field label="Wordmark / brand" hint="Tanpa titik. Contoh: vano">
+                    <Field label="Wordmark / brand" hint="Tanpa titik. Contoh: Baim">
                       <input
                         value={draft.profile.brand}
                         required
@@ -1341,11 +1341,11 @@ export default function Admin({
                                 skills: current.skills.map((item) =>
                                   item.id === skill.id
                                     ? {
-                                        ...item,
-                                        tools: event.target.value
-                                          .split(',')
-                                          .map((value) => value.trim()),
-                                      }
+                                      ...item,
+                                      tools: event.target.value
+                                        .split(',')
+                                        .map((value) => value.trim()),
+                                    }
                                     : item,
                                 ),
                               }));

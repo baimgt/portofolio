@@ -44,7 +44,7 @@ test('Vercel serverless handler handles rewritten /api and /uploads routes clean
 
     const content = await call('/api?__path=/api/content', { anonymous: true });
     assert.equal(content.status, 200);
-    assert.equal(content.body.profile.firstName, 'Vano');
+    assert.equal(content.body.profile.firstName, 'Baim');
 
     const me = await call('/api?__path=/api/auth/me');
     assert.equal(me.status, 200);

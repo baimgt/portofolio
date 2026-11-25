@@ -1,8 +1,8 @@
 {
   "profile": {
-    "name": "Vano",
-    "firstName": "Vano",
-    "brand": "vano",
+    "name": "Baim",
+    "firstName": "Baim",
+    "brand": "Baim",
     "role": "Creative Developer",
     "location": "Indonesia",
     "available": true,
@@ -11,7 +11,7 @@
     "intro": "Memadukan desain, kode, dan sedikit rasa penasaran untuk menciptakan pengalaman digital yang berkesan.",
     "about": "Saya creative developer yang percaya bahwa website yang baik bukan hanya tentang bagaimana ia terlihat, tapi juga bagaimana ia terasa. Saya merangkai desain yang thoughtful dengan teknologi web modern.",
     "aboutMore": "Dari ide pertama sampai interaksi terkecil, saya menikmati setiap proses mengubah hal yang kompleks menjadi pengalaman yang sederhana, intuitif, dan punya karakter.",
-    "email": "hello@vano.dev",
+    "email": "hello@Baim.dev",
     "github": "https://github.com/",
     "instagram": "https://www.instagram.com/",
     "linkedin": "https://www.linkedin.com/"
@@ -52,7 +52,7 @@
     "strapText": "DESIGN + CODE + CURIOSITY",
     "brandText": "",
     "logoImage": "",
-    "signatureText": "Vano",
+    "signatureText": "Baim",
     "signatureImage": "",
     "accentColor": "#437bf0",
     "paperColor": "#deded0",
