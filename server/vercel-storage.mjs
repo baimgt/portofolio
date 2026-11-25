@@ -1,14 +1,14 @@
 import session from 'express-session';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { randomBytes } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Pool } from 'pg';
 import { hashPassword } from './crypto.mjs';
 
-const seedContent = JSON.parse(
-  readFileSync(new URL('../shared/content.json', import.meta.url), 'utf8'),
-);
+const require = createRequire(import.meta.url);
+const seedContent = require('../shared/content.json');
 
 function migrateContent(seed, saved) {
   return {
@@ -34,13 +34,27 @@ function defaultAdminRow() {
 // ============================================================
 // 1. Postgres Adapter (Neon / Supabase / Vercel Marketplace)
 // ============================================================
-async function createPostgresStorage(connectionString) {
+async function createPostgresStorage(rawConnectionString) {
   const localDb =
-    connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
+    rawConnectionString.includes('localhost') || rawConnectionString.includes('127.0.0.1');
+  let cleanConnectionString = rawConnectionString.trim();
+  let useSsl = localDb ? false : { rejectUnauthorized: false };
+  try {
+    const parsedUrl = new URL(cleanConnectionString);
+    if (parsedUrl.searchParams.get('sslmode') === 'disable') {
+      useSsl = false;
+    }
+    parsedUrl.searchParams.delete('sslmode');
+    parsedUrl.searchParams.delete('uselibpqcompat');
+    cleanConnectionString = parsedUrl.toString();
+  } catch {
+    // Keep original connection string if URL parsing fails.
+  }
   const pool = new Pool({
-    connectionString,
+    connectionString: cleanConnectionString,
     max: 5,
-    ssl: localDb ? false : { rejectUnauthorized: false },
+    connectionTimeoutMillis: 8000,
+    ssl: useSsl,
   });
 
   await pool.query(`

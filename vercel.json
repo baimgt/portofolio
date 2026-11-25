@@ -4,24 +4,20 @@
   "outputDirectory": "dist",
   "functions": {
     "api/index.mjs": {
-      "includeFiles": "{shared,server}/**"
+      "includeFiles": "shared/**"
     }
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/index.mjs?__path=/api/$1"
-    },
-    {
-      "source": "/api",
-      "destination": "/api/index.mjs?__path=/api"
+      "destination": "/api?__path=/api/$1"
     },
     {
       "source": "/uploads/(.*)",
-      "destination": "/api/index.mjs?__path=/uploads/$1"
+      "destination": "/api?__path=/uploads/$1"
     },
     {
-      "source": "/((?!api/|uploads/|images/|audio/|assets/|favicon\\.svg).*)",
+      "source": "/((?!api$|api/|uploads/|images/|audio/|assets/|favicon\\.svg).*)",
       "destination": "/index.html"
     }
   ]

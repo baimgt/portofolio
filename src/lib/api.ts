@@ -16,7 +16,14 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     cache: 'no-store',
   });
   if (!response.headers.get('content-type')?.includes('application/json')) {
-    throw new Error('Server tidak tersedia. Jalankan aplikasi dengan npm run dev.');
+    const isLocal =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    throw new Error(
+      isLocal
+        ? 'Server tidak tersedia. Jalankan aplikasi dengan npm run dev.'
+        : `API serverless tidak merespons JSON (HTTP ${response.status}). Periksa deployment Vercel atau koneksi database.`,
+    );
   }
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || 'Permintaan gagal. Silakan coba lagi.');

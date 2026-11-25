@@ -37,22 +37,22 @@ test('Vercel serverless handler handles rewritten /api and /uploads routes clean
   };
 
   try {
-    const health = await call('/api/index.mjs?__path=/api/health', { anonymous: true });
+    const health = await call('/api?__path=/api/health', { anonymous: true });
     assert.equal(health.status, 200);
     assert.equal(health.body.ok, true);
     assert.equal(health.body.storage, 'temporary');
 
-    const content = await call('/api/index.mjs?__path=/api/content', { anonymous: true });
+    const content = await call('/api?__path=/api/content', { anonymous: true });
     assert.equal(content.status, 200);
     assert.equal(content.body.profile.firstName, 'Vano');
 
-    const me = await call('/api/index.mjs?__path=/api/auth/me');
+    const me = await call('/api?__path=/api/auth/me');
     assert.equal(me.status, 200);
     assert.equal(me.body.authenticated, false);
     assert.equal(me.body.storageMode, 'temporary');
     csrf = me.body.csrfToken;
 
-    const login = await call('/api/index.mjs?__path=/api/auth/login', {
+    const login = await call('/api?__path=/api/auth/login', {
       method: 'POST',
       body: { username: 'admin', password: 'admin' },
     });
@@ -62,7 +62,7 @@ test('Vercel serverless handler handles rewritten /api and /uploads routes clean
 
     const updated = structuredClone(content.body);
     updated.profile.name = 'Vercel Test User';
-    const save = await call('/api/index.mjs?__path=/api/admin/content', {
+    const save = await call('/api?__path=/api/admin/content', {
       method: 'PUT',
       body: updated,
     });
@@ -76,14 +76,14 @@ test('Vercel serverless handler handles rewritten /api and /uploads routes clean
       .toBuffer();
     const form = new FormData();
     form.append('image', new Blob([imgBuf], { type: 'image/png' }), 'vercel.png');
-    const uploaded = await call('/api/index.mjs?__path=/api/admin/upload', {
+    const uploaded = await call('/api?__path=/api/admin/upload', {
       method: 'POST',
       body: form,
     });
     assert.equal(uploaded.status, 201);
     assert.match(uploaded.body.url, /^\/uploads\/.+\.webp$/);
 
-    const fetchedImg = await fetch(`${base}/api/index.mjs?__path=${uploaded.body.url}`);
+    const fetchedImg = await fetch(`${base}/api?__path=${uploaded.body.url}`);
     assert.equal(fetchedImg.status, 200);
     assert.match(fetchedImg.headers.get('content-type'), /webp/);
   } finally {

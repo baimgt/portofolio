@@ -1,4 +1,4 @@
-import { readFileSync as readLanguageFile } from 'node:fs';
+import { createRequire } from 'node:module';
 import express from 'express';
 import session from 'express-session';
 import helmet from 'helmet';
@@ -6,6 +6,9 @@ import { rateLimit } from 'express-rate-limit';
 import multer from 'multer';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { verifyPassword, hashPassword } from './crypto.mjs';
+
+const require = createRequire(import.meta.url);
+const languagesList = require('../shared/languages.json');
 
 const text = (value, max = 5000) => typeof value === 'string' && value.length <= max;
 const safeUrl = (value, local = false) =>
@@ -51,11 +54,7 @@ const frameworkValid = (item) =>
   item.name.trim() &&
   safeUrl(item.logo, true);
 
-const LANGUAGE_CODES = new Set(
-  JSON.parse(readLanguageFile(new URL('../shared/languages.json', import.meta.url), 'utf8')).map(
-    ([code]) => code,
-  ),
-);
+const LANGUAGE_CODES = new Set(languagesList.map(([code]) => code));
 
 function hasValidImageMagicBytes(buffer, mimetype) {
   if (!Buffer.isBuffer(buffer) || buffer.length < 12) return false;
@@ -215,6 +214,7 @@ export async function createExpressApp({
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     skipSuccessfulRequests: true,
+    validate: false,
     message: { error: 'Terlalu banyak percobaan login. Coba lagi dalam 15 menit.' },
   });
 
@@ -425,6 +425,7 @@ export async function createExpressApp({
     limit: 5,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
+    validate: false,
     message: { error: 'Tunggu sebentar sebelum mengirim pesan lagi.' },
   });
 
