@@ -775,8 +775,19 @@ export default function Admin({
         </nav>
         <div className="sidebar-bottom">
           <div className="storage-status">
-            <span className="status-dot" />
-            SQLite connected<span>SERVER-SIDE STORAGE</span>
+            <span
+              className={`status-dot ${auth.persistent === false ? 'unavailable' : ''}`}
+            />
+            {auth.storageMode === 'postgres'
+              ? 'Postgres connected'
+              : auth.storageMode === 'kv'
+                ? 'Upstash KV connected'
+                : auth.storageMode === 'temporary'
+                  ? 'Temporary (/tmp)'
+                  : 'SQLite connected'}
+            <span>
+              {auth.persistent === false ? 'EPHEMERAL VERCEL STORAGE' : 'SERVER-SIDE STORAGE'}
+            </span>
           </div>
           <button className="sidebar-preview" onClick={leave}>
             <ExternalLink size={16} />
@@ -900,6 +911,18 @@ export default function Admin({
               >
                 <X size={16} />
               </button>
+            </div>
+          )}
+          {auth.storageMode === 'temporary' && (
+            <div className="admin-vercel-note" role="status">
+              <CircleHelp size={16} />
+              <span>
+                Mode Vercel sementara (<code>/tmp</code>) aktif: perubahan dapat ter-reset saat
+                serverless restart. Untuk menyimpan permanen di Vercel, tambahkan database{' '}
+                <strong>Postgres</strong> (<code>POSTGRES_URL</code> / <code>DATABASE_URL</code>)
+                atau <strong>Upstash Redis / KV</strong> di menu Storage Vercel, serta{' '}
+                <code>SESSION_SECRET</code>.
+              </span>
             </div>
           )}
           {dirty && settingsTab && (

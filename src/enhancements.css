@@ -2096,3 +2096,28 @@ html[data-theme='light'] .lang-popover {
     transition: none !important;
   }
 }
+
+.admin-vercel-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 15px;
+  margin: 0 0 22px;
+  border-radius: 8px;
+  border: 1px solid rgba(226, 178, 114, 0.35);
+  background: rgba(226, 178, 114, 0.08);
+  color: #ebd0a3;
+  font-size: 11px;
+  line-height: 1.75;
+}
+.admin-vercel-note svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: #e2b272;
+}
+.admin-vercel-note code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 10px;
+}

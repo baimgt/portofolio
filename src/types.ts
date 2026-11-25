@@ -126,6 +126,8 @@ export interface AuthState {
   mustChangePassword: boolean;
   csrfToken: string;
   username?: string;
+  storageMode?: 'sqlite' | 'postgres' | 'kv' | 'temporary';
+  persistent?: boolean;
 }
 
 export interface Message {

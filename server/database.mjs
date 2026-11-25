@@ -2,22 +2,27 @@ import Database from 'better-sqlite3';
 import session from 'express-session';
 import { mkdirSync, readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
+import { hashPassword, verifyPassword } from './crypto.mjs';
 
-export function hashPassword(password) {
-  const salt = randomBytes(16).toString('hex');
-  return `${salt}:${scryptSync(password, salt, 64).toString('hex')}`;
-}
+export { hashPassword, verifyPassword };
 
-export function verifyPassword(password, saved) {
-  if (typeof password !== 'string' || password.length > 256) return false;
-  const [salt, hash] = saved.split(':');
-  return timingSafeEqual(Buffer.from(hash, 'hex'), scryptSync(password, salt, 64));
+export function migrateContent(seed, saved) {
+  return {
+    ...seed,
+    ...saved,
+    profile: { ...seed.profile, ...saved.profile },
+    pages: { ...seed.pages, ...saved.pages },
+    card: { ...seed.card, ...saved.card },
+    copy: { ...seed.copy, ...saved.copy },
+    settings: { ...seed.settings, ...saved.settings },
+  };
 }
 
 export function openDatabase(directory) {
   mkdirSync(directory, { recursive: true, mode: 0o700 });
-  mkdirSync(join(directory, 'uploads'), { recursive: true, mode: 0o700 });
+  const uploadsDir = join(directory, 'uploads');
+  mkdirSync(uploadsDir, { recursive: true, mode: 0o700 });
   const db = new Database(join(directory, 'portfolio.sqlite'));
   db.pragma('journal_mode = WAL');
   db.pragma('busy_timeout = 5000');
@@ -37,15 +42,7 @@ export function openDatabase(directory) {
   } else {
     // Add new CMS fields without replacing the owner's previously saved content.
     const saved = JSON.parse(existing.document);
-    const migrated = {
-      ...seed,
-      ...saved,
-      profile: { ...seed.profile, ...saved.profile },
-      pages: { ...seed.pages, ...saved.pages },
-      card: { ...seed.card, ...saved.card },
-      copy: { ...seed.copy, ...saved.copy },
-      settings: { ...seed.settings, ...saved.settings },
-    };
+    const migrated = migrateContent(seed, saved);
     if (JSON.stringify(migrated) !== existing.document)
       db.prepare('UPDATE content SET document = ?, updated_at = ? WHERE id = 1').run(
         JSON.stringify(migrated),
@@ -121,11 +118,49 @@ export function openDatabase(directory) {
   );
   cleanup.unref();
   return {
+    mode: 'sqlite',
+    persistent: true,
     db,
+    uploadsDir,
     secret,
     store: new SQLiteSessions(),
     getContent,
     saveContent,
+    findAdminByUsername: (username) =>
+      db.prepare('SELECT * FROM admins WHERE username = ?').get(username) || null,
+    findAdminById: (id) =>
+      db.prepare('SELECT id, username, must_change FROM admins WHERE id = ?').get(id) || null,
+    getAdminPasswordById: (id) =>
+      db.prepare('SELECT password FROM admins WHERE id = ?').get(id)?.password || null,
+    updateAdminPassword: (id, nextHash, keepSid) => {
+      db.transaction(() => {
+        db.prepare('UPDATE admins SET password = ?, must_change = 0 WHERE id = ?').run(
+          nextHash,
+          id,
+        );
+        db.prepare('DELETE FROM sessions WHERE sid != ?').run(keepSid);
+      })();
+    },
+    listMessages: () => db.prepare('SELECT * FROM messages ORDER BY id DESC').all(),
+    createMessage: ({ name, email, message, createdAt }) => {
+      db.prepare('INSERT INTO messages (name, email, message, created_at) VALUES (?, ?, ?, ?)').run(
+        name,
+        email,
+        message,
+        createdAt,
+      );
+    },
+    markMessageRead: (id) => {
+      db.prepare('UPDATE messages SET is_read = 1 WHERE id = ?').run(id);
+    },
+    deleteMessage: (id) => {
+      db.prepare('DELETE FROM messages WHERE id = ?').run(id);
+    },
+    saveUpload: (filename, _mime, buffer) => {
+      writeFileSync(join(uploadsDir, filename), buffer);
+      return `/uploads/${filename}`;
+    },
+    getUpload: null,
     close: () => {
       clearInterval(cleanup);
       db.close();

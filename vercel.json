@@ -1,0 +1,28 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/index.mjs": {
+      "includeFiles": "{shared,server}/**"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.mjs?__path=/api/$1"
+    },
+    {
+      "source": "/api",
+      "destination": "/api/index.mjs?__path=/api"
+    },
+    {
+      "source": "/uploads/(.*)",
+      "destination": "/api/index.mjs?__path=/uploads/$1"
+    },
+    {
+      "source": "/((?!api/|uploads/|images/|audio/|assets/|favicon\\.svg).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
