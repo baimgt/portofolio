@@ -139,3 +139,4 @@ Aset Black Suit contoh adalah ilustrasi overlay yang dibuat sesuai koordinat fot
 ## Bahasa (150 bahasa)
 
 Di Studio Admin buka tab **Bahasa**: pilih bahasa dasar website dari 150 bahasa (`shared/languages.json`). Terjemahan memakai Google Website Translator (mesin, perlu internet; bahasa `id` = konten asli tanpa terjemahan). Pengunjung hanya melihat tombol bahasa di header jika admin mengaktifkan **Mode bahasa**; jika nonaktif, semua pengunjung memakai bahasa dasar. Halaman admin tidak diterjemahkan.
+# portofolio
