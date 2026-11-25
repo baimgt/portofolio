@@ -3,6 +3,7 @@
 Portfolio React + TypeScript yang terinspirasi struktur visual Alfari, dengan sistem animasi GSAP / ScrollTrigger dan Lenis. Identitas Vano, foto stock, dan empat concept project adalah konten contoh yang perlu dipersonalisasi sebelum publikasi.
 
 DEMO LIVE : https://vanoportofolio.freedev.app/?i=1 
+![Uploading image.png…]()
 
 ## Jalankan
 
