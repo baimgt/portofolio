@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ArrowUp, ArrowUpRight } from 'lucide-react';
 import Signature from './Signature';
 import { Github, Instagram, Linkedin } from './BrandIcons';
+import { smoothScrollTo } from './Motion';
 import type { Content, Navigate } from '../types';
 
 export default function Footer({ content, navigate }: { content: Content; navigate: Navigate }) {
@@ -36,14 +37,7 @@ export default function Footer({ content, navigate }: { content: Content; naviga
           <button
             className="back-to-top"
             aria-label="Kembali ke atas"
-            onClick={() =>
-              window.scrollTo({
-                top: 0,
-                behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-                  ? 'instant'
-                  : 'smooth',
-              })
-            }
+            onClick={() => smoothScrollTo(0)}
           >
             <ArrowUp size={20} />
           </button>

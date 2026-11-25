@@ -1,0 +1,8 @@
+Taruh file lagu kamu di folder ini (`public/audio/`) dengan nama:
+
+  bgm.mp3   (atau bgm.ogg / bgm.wav / music.mp3)
+
+Contoh path lengkap:
+  public/audio/bgm.mp3
+
+Setelah file ditaruh, tombol ON/OFF di navbar akan otomatis memutar lagu tersebut secara loop dengan fade-in & fade-out yang halus. Jika belum ada file lagu, website tetap memutar suara ambient bawaan.

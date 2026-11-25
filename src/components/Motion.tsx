@@ -8,6 +8,26 @@ import 'lenis/dist/lenis.css';
 gsap.registerPlugin(ScrollTrigger);
 export const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+let activeLenis: Lenis | null = null;
+
+export function smoothScrollTo(
+  target: number | string | HTMLElement,
+  options: { immediate?: boolean; offset?: number } = {},
+) {
+  const immediate = options.immediate || reducedMotion();
+  const offset = typeof target === 'number' ? 0 : (options.offset ?? -100);
+  if (activeLenis && !immediate) {
+    activeLenis.scrollTo(target, { offset, duration: 1.15 });
+    return;
+  }
+  if (typeof target === 'number') {
+    window.scrollTo({ top: target, behavior: immediate ? 'instant' : 'smooth' });
+    return;
+  }
+  const element = typeof target === 'string' ? document.querySelector<HTMLElement>(target) : target;
+  element?.scrollIntoView({ behavior: immediate ? 'instant' : 'smooth' });
+}
+
 export function usePortfolioMotion(scope: RefObject<HTMLDivElement | null>, entranceDelay = 0) {
   useLayoutEffect(() => {
     const root = scope.current;
@@ -16,14 +36,17 @@ export function usePortfolioMotion(scope: RefObject<HTMLDivElement | null>, entr
     let lenis: Lenis | undefined;
     let tick: ((time: number) => void) | undefined;
     const context = gsap.context(() => {
+      gsap.defaults({ force3D: true });
       media.add('(prefers-reduced-motion: no-preference)', () => {
         lenis = new Lenis({
-          duration: 1.1,
+          lerp: 0.075,
           smoothWheel: true,
+          wheelMultiplier: 0.9,
           syncTouch: false,
           anchors: { offset: -100 },
           prevent: (node) => node.hasAttribute('data-lenis-prevent'),
         });
+        activeLenis = lenis;
         lenis.on('scroll', ScrollTrigger.update);
         tick = (time: number) => lenis?.raf(time * 1000);
         gsap.ticker.add(tick);
@@ -55,17 +78,30 @@ export function usePortfolioMotion(scope: RefObject<HTMLDivElement | null>, entr
             )
             .from('.hero-bottom', { opacity: 0, y: 12, duration: 0.8 }, '-=0.6');
           gsap.to('.hero-words', {
-            y: 85,
-            opacity: 0.1,
+            y: 90,
+            opacity: 0.08,
             ease: 'none',
             scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 1 },
           });
           gsap.to('.lanyard-parallax', {
-            y: -95,
+            y: -105,
             rotation: 6,
             scale: 0.95,
             ease: 'none',
-            scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 1.5 },
+            scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 1.4 },
+          });
+          gsap.to('.hero-orbit', {
+            y: 65,
+            rotation: 26,
+            scale: 1.05,
+            ease: 'none',
+            scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 1.4 },
+          });
+          gsap.to('.hero-bottom', {
+            y: 26,
+            opacity: 0,
+            ease: 'none',
+            scrollTrigger: { trigger: '.hero', start: 'top top', end: '35% top', scrub: 0.9 },
           });
         }
 
@@ -127,33 +163,41 @@ export function usePortfolioMotion(scope: RefObject<HTMLDivElement | null>, entr
             );
         });
         gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach((element) => {
+          if (
+            element.classList.contains('framework-item') ||
+            element.classList.contains('service-row') ||
+            element.classList.contains('education-entry') ||
+            element.classList.contains('services-arrow')
+          ) {
+            return;
+          }
           gsap.fromTo(
             element,
-            { y: 35, opacity: 0 },
+            { y: 34, opacity: 0 },
             {
               y: 0,
               opacity: 1,
               duration: 0.95,
-              ease: 'power3.out',
+              ease: 'expo.out',
               scrollTrigger: {
                 trigger: element,
                 start: 'top 91%',
-                toggleActions: 'play none none reverse',
+                once: true,
               },
             },
           );
         });
         gsap.utils.toArray<HTMLElement>('[data-line-reveal]').forEach((element) => {
           gsap.from(element.querySelectorAll('.line-inner'), {
-            yPercent: 105,
-            rotate: 2,
+            yPercent: 108,
+            rotate: 2.2,
             duration: 1,
-            stagger: 0.1,
-            ease: 'power3.out',
+            stagger: 0.09,
+            ease: 'expo.out',
             scrollTrigger: {
               trigger: element,
               start: 'top 90%',
-              toggleActions: 'play none none reverse',
+              once: true,
             },
           });
         });
@@ -163,16 +207,95 @@ export function usePortfolioMotion(scope: RefObject<HTMLDivElement | null>, entr
             { clipPath: 'inset(12% 0 12% 0)' },
             {
               clipPath: 'inset(0% 0 0% 0)',
-              duration: 1.25,
+              duration: 1.15,
               ease: 'power3.inOut',
               scrollTrigger: {
                 trigger: element,
                 start: 'top 94%',
-                toggleActions: 'play none none reverse',
+                once: true,
               },
             },
           );
         });
+
+        // Staggered smooth scroll choreography for grids & lists
+        const educationTimeline = root.querySelector('.education-timeline');
+        if (educationTimeline) {
+          gsap.fromTo(
+            educationTimeline.querySelectorAll('.education-entry'),
+            { y: 34, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.9,
+              stagger: 0.13,
+              ease: 'expo.out',
+              scrollTrigger: { trigger: educationTimeline, start: 'top 86%', once: true },
+            },
+          );
+        }
+        const frameworksGrid = root.querySelector('.frameworks-grid');
+        if (frameworksGrid) {
+          gsap.fromTo(
+            frameworksGrid.querySelectorAll('.framework-item'),
+            { y: 30, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.85,
+              stagger: 0.07,
+              ease: 'expo.out',
+              scrollTrigger: { trigger: frameworksGrid, start: 'top 88%', once: true },
+            },
+          );
+        }
+        const servicesList = root.querySelector('.services-list');
+        if (servicesList) {
+          gsap.fromTo(
+            servicesList.querySelectorAll('.service-row'),
+            { y: 32, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.9,
+              stagger: 0.1,
+              ease: 'expo.out',
+              scrollTrigger: { trigger: servicesList, start: 'top 88%', once: true },
+            },
+          );
+        }
+        const projectsGrid = root.querySelector('.projects-grid');
+        if (projectsGrid) {
+          gsap.fromTo(
+            projectsGrid.querySelectorAll('.project-card'),
+            { y: 44, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.95,
+              stagger: 0.12,
+              ease: 'expo.out',
+              scrollTrigger: { trigger: projectsGrid, start: 'top 88%', once: true },
+            },
+          );
+        }
+        if (root.querySelector('.services-arrow')) {
+          gsap.fromTo(
+            '.services-arrow',
+            { y: -12, rotation: -10 },
+            {
+              y: 18,
+              rotation: 8,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: '.services-section',
+                start: 'top bottom',
+                end: 'bottom top',
+                scrub: 1.1,
+              },
+            },
+          );
+        }
         media.add('(min-width: 1024px)', () => {
           gsap.utils.toArray<HTMLElement>('[data-parallax]').forEach((element) => {
             gsap.fromTo(
@@ -229,6 +352,7 @@ export function usePortfolioMotion(scope: RefObject<HTMLDivElement | null>, entr
       clearTimeout(timer);
       window.removeEventListener('load', refresh);
       if (tick) gsap.ticker.remove(tick);
+      if (activeLenis === lenis) activeLenis = null;
       lenis?.destroy();
       media.revert();
       context.revert();
@@ -244,16 +368,25 @@ export function Magnetic({
   className?: string;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
+  const quickRef = useRef<{ x: gsap.QuickToFunc; y: gsap.QuickToFunc } | null>(null);
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    quickRef.current = {
+      x: gsap.quickTo(node, 'x', { duration: 0.4, ease: 'power3.out' }),
+      y: gsap.quickTo(node, 'y', { duration: 0.4, ease: 'power3.out' }),
+    };
+    return () => {
+      quickRef.current = null;
+      gsap.killTweensOf(node);
+    };
+  }, []);
   const move = (event: PointerEvent<HTMLSpanElement>) => {
-    if (event.pointerType !== 'mouse' || reducedMotion() || !ref.current) return;
+    if (event.pointerType !== 'mouse' || reducedMotion() || !ref.current || !quickRef.current)
+      return;
     const bounds = ref.current.getBoundingClientRect();
-    gsap.to(ref.current, {
-      x: (event.clientX - bounds.left - bounds.width / 2) * 0.13,
-      y: (event.clientY - bounds.top - bounds.height / 2) * 0.2,
-      duration: 0.45,
-      ease: 'power3.out',
-      overwrite: 'auto',
-    });
+    quickRef.current.x((event.clientX - bounds.left - bounds.width / 2) * 0.13);
+    quickRef.current.y((event.clientY - bounds.top - bounds.height / 2) * 0.2);
   };
   return (
     <span
@@ -261,7 +394,7 @@ export function Magnetic({
       className={`magnetic ${className}`}
       onPointerMove={move}
       onPointerLeave={() =>
-        gsap.to(ref.current, { x: 0, y: 0, duration: 0.7, ease: 'elastic.out(1, 0.45)' })
+        gsap.to(ref.current, { x: 0, y: 0, duration: 0.65, ease: 'elastic.out(1, 0.45)', overwrite: true })
       }
     >
       {children}
@@ -274,22 +407,27 @@ export function ProjectCursor({ label = 'VIEW PROJECT' }: { label?: string }) {
   useLayoutEffect(() => {
     if (!ref.current || reducedMotion() || !window.matchMedia('(pointer: fine)').matches) return;
     const cursor = ref.current;
-    const x = gsap.quickTo(cursor, 'x', { duration: 0.25, ease: 'power3.out' });
-    const y = gsap.quickTo(cursor, 'y', { duration: 0.25, ease: 'power3.out' });
+    const x = gsap.quickTo(cursor, 'x', { duration: 0.22, ease: 'power3.out' });
+    const y = gsap.quickTo(cursor, 'y', { duration: 0.22, ease: 'power3.out' });
+    let activeHover = false;
     const move = (event: globalThis.PointerEvent) => {
       x(event.clientX);
       y(event.clientY);
     };
     const over = (event: globalThis.PointerEvent) => {
       const target = event.target as HTMLElement;
+      const nextHover = Boolean(target.closest('[data-project-cursor]'));
+      if (nextHover === activeHover) return;
+      activeHover = nextHover;
       gsap.to(cursor, {
-        scale: target.closest('[data-project-cursor]') ? 1 : 0,
-        duration: 0.25,
+        scale: nextHover ? 1 : 0,
+        duration: 0.24,
         ease: 'power3.out',
+        overwrite: 'auto',
       });
     };
-    document.addEventListener('pointermove', move);
-    document.addEventListener('pointerover', over);
+    document.addEventListener('pointermove', move, { passive: true });
+    document.addEventListener('pointerover', over, { passive: true });
     return () => {
       document.removeEventListener('pointermove', move);
       document.removeEventListener('pointerover', over);

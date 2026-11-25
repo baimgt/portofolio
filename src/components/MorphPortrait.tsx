@@ -3,6 +3,7 @@ import { ScanFace } from 'lucide-react';
 import gsap from 'gsap';
 import Signature from './Signature';
 import { reducedMotion } from './Motion';
+import { soundEngine } from '../lib/sound';
 
 export default function MorphPortrait({
   src,
@@ -30,6 +31,7 @@ export default function MorphPortrait({
     if (!ref.current) return;
     if (revealed.current === show) return;
     revealed.current = show;
+    soundEngine.playMorph(show);
     gsap.to(ref.current, {
       '--morph-radius': show ? '150%' : '0%',
       duration: reducedMotion() ? 0 : show ? 0.85 : 0.65,

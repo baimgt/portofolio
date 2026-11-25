@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type PointerEvent } from 'react';
 import {
   ArrowDown,
   ArrowDownRight,
@@ -45,17 +45,26 @@ export function ProjectCard({
   index?: number;
 }) {
   const ref = useRef<HTMLAnchorElement>(null);
+  const quickTilt = useRef<{ rx: gsap.QuickToFunc; ry: gsap.QuickToFunc } | null>(null);
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    gsap.set(node, { transformPerspective: 1200, force3D: true });
+    quickTilt.current = {
+      rx: gsap.quickTo(node, 'rotationX', { duration: 0.55, ease: 'power3.out' }),
+      ry: gsap.quickTo(node, 'rotationY', { duration: 0.55, ease: 'power3.out' }),
+    };
+    return () => {
+      quickTilt.current = null;
+      gsap.killTweensOf(node);
+    };
+  }, []);
   const tilt = (event: PointerEvent<HTMLAnchorElement>) => {
-    if (reducedMotion() || event.pointerType !== 'mouse' || !ref.current) return;
+    if (reducedMotion() || event.pointerType !== 'mouse' || !ref.current || !quickTilt.current)
+      return;
     const box = ref.current.getBoundingClientRect();
-    gsap.to(ref.current, {
-      rotationY: (event.clientX - box.left - box.width / 2) / 160,
-      rotationX: -(event.clientY - box.top - box.height / 2) / 180,
-      transformPerspective: 1200,
-      duration: 0.7,
-      ease: 'power3.out',
-      overwrite: 'auto',
-    });
+    quickTilt.current.ry((event.clientX - box.left - box.width / 2) / 160);
+    quickTilt.current.rx(-(event.clientY - box.top - box.height / 2) / 180);
   };
   return (
     <a
@@ -68,9 +77,10 @@ export function ProjectCard({
         navigate(`/projects/${project.slug}`);
       }}
       onPointerMove={tilt}
-      onPointerLeave={() =>
-        gsap.to(ref.current, { rotationX: 0, rotationY: 0, duration: 0.8, ease: 'power3.out' })
-      }
+      onPointerLeave={() => {
+        quickTilt.current?.rx(0);
+        quickTilt.current?.ry(0);
+      }}
       style={{ animationDelay: `${index * 65}ms` }}
     >
       <div className="project-image" data-image-reveal>
@@ -101,12 +111,22 @@ export function ProjectCard({
 
 function Projects({ content, navigate }: { content: Content; navigate: Navigate }) {
   const [filter, setFilter] = useState('All projects');
+  const gridRef = useRef<HTMLDivElement>(null);
+  const hasFiltered = useRef(false);
   const ordered = [...content.projects].sort(
     (first, second) => Number(second.featured) - Number(first.featured),
   );
   const filtered =
     filter === 'All projects' ? ordered : ordered.filter((project) => project.category === filter);
   useEffect(() => {
+    if (hasFiltered.current && gridRef.current && !reducedMotion()) {
+      gsap.fromTo(
+        gridRef.current.querySelectorAll('.project-card'),
+        { y: 28, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.65, stagger: 0.08, ease: 'expo.out', overwrite: 'auto' },
+      );
+    }
+    hasFiltered.current = true;
     const timer = setTimeout(() => ScrollTrigger.refresh(), 100);
     return () => clearTimeout(timer);
   }, [filter, content.projects.length]);
@@ -160,6 +180,7 @@ function Projects({ content, navigate }: { content: Content; navigate: Navigate 
           ))}
         </div>
         <div
+          ref={gridRef}
           className="projects-grid"
           id="projects-panel"
           role="tabpanel"

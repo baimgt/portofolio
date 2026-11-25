@@ -6,7 +6,7 @@ import type { Content } from './types';
 import { api } from './lib/api';
 import Header from './components/Header';
 import { applyLanguage, effectiveLanguage } from './lib/i18n';
-import { PageLoader, reducedMotion } from './components/Motion';
+import { PageLoader, reducedMotion, smoothScrollTo } from './components/Motion';
 import Portfolio from './pages/Portfolio';
 import ProjectDetail from './pages/ProjectDetail';
 
@@ -17,7 +17,8 @@ export default function App() {
   const [route, setRoute] = useState(window.location.pathname);
   const [loading, setLoading] = useState(!window.location.pathname.startsWith('/admin'));
   const overlay = useRef<HTMLDivElement>(null);
-  const navigating = useRef(false);
+  const transitionPhase = useRef<'idle' | 'entering' | 'exiting'>('idle');
+  const transitionTl = useRef<gsap.core.Timeline | null>(null);
   const entranceDelay = useRef(loading ? 0.82 : 0);
   const refresh = useCallback(async () => {
     try {
@@ -60,14 +61,11 @@ export default function App() {
       : `${content.profile.name} - ${content.profile.role}`;
   }, [content.profile, route]);
   const navigate = useCallback((to: string) => {
-    if (navigating.current) return;
+    if (transitionPhase.current === 'entering') return;
     const target = new URL(to, window.location.origin);
     if (target.pathname === window.location.pathname) {
-      if (target.hash)
-        document
-          .querySelector(target.hash)
-          ?.scrollIntoView({ behavior: reducedMotion() ? 'instant' : 'smooth' });
-      else window.scrollTo({ top: 0, behavior: reducedMotion() ? 'instant' : 'smooth' });
+      if (target.hash) smoothScrollTo(target.hash);
+      else smoothScrollTo(0);
       return;
     }
     const apply = () => {
@@ -79,27 +77,29 @@ export default function App() {
         document.getElementById('main-content')?.focus({ preventScroll: true }),
       );
       if (target.hash)
-        setTimeout(
-          () =>
-            document.getElementById(target.hash.slice(1))?.scrollIntoView({ behavior: 'instant' }),
-          140,
-        );
+        setTimeout(() => smoothScrollTo(`#${target.hash.slice(1)}`, { immediate: true }), 140);
     };
     if (reducedMotion() || !overlay.current) {
       apply();
       return;
     }
-    navigating.current = true;
-    gsap
+    if (transitionPhase.current === 'exiting') {
+      transitionTl.current?.kill();
+    }
+    transitionPhase.current = 'entering';
+    transitionTl.current = gsap
       .timeline({
         onComplete: () => {
-          navigating.current = false;
+          transitionPhase.current = 'idle';
         },
       })
       .set(overlay.current, { yPercent: 100 })
-      .to(overlay.current, { yPercent: 0, duration: 0.5, ease: 'power4.inOut' })
-      .call(apply)
-      .to(overlay.current, { yPercent: -100, duration: 0.65, ease: 'power4.inOut', delay: 0.05 })
+      .to(overlay.current, { yPercent: 0, duration: 0.4, ease: 'power4.inOut' })
+      .call(() => {
+        transitionPhase.current = 'exiting';
+        apply();
+      })
+      .to(overlay.current, { yPercent: -100, duration: 0.5, ease: 'power4.inOut', delay: 0.04 })
       .set(overlay.current, { yPercent: 100 });
   }, []);
   const isAdmin = route.startsWith('/admin');
