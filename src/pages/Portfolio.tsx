@@ -33,6 +33,7 @@ import MorphPortrait from '../components/MorphPortrait';
 import Signature from '../components/Signature';
 import { EducationSection, FrameworksSection } from '../components/Journey';
 import { api } from '../lib/api';
+import { resolvePublicPersonName } from '../lib/seo';
 import type { Content, Navigate, Project } from '../types';
 
 export function ProjectCard({
@@ -414,6 +415,9 @@ export default function Portfolio({
   const ref = useRef<HTMLDivElement>(null);
   usePortfolioMotion(ref, entranceDelay);
   const { profile, pages } = content;
+  const publicName = resolvePublicPersonName(content);
+  const hasFullNameByline =
+    !!publicName && !profile.name.toLowerCase().includes(publicName.toLowerCase());
   return (
     <div ref={ref} className="portfolio">
       <div className="scroll-progress" aria-hidden="true">
@@ -532,7 +536,7 @@ export default function Portfolio({
                 <MorphPortrait
                   src={profile.portrait}
                   alternate={profile.portraitHover}
-                  alt={`${profile.name}, creative developer`}
+                  alt={`${publicName}, ${profile.role}`}
                   signature={content.card.signatureText}
                   signatureImage={content.card.signatureImage}
                   parallax
@@ -541,6 +545,11 @@ export default function Portfolio({
                 <span className="portrait-corner br" />
               </div>
               <div className="about-description">
+                {hasFullNameByline && (
+                  <p className="about-identity-byline" data-reveal>
+                    <strong>{publicName}</strong> ({profile.name}) — {profile.role}, {profile.location}.
+                  </p>
+                )}
                 <p data-reveal>{profile.about}</p>
                 <p data-reveal>{profile.aboutMore}</p>
                 <div className="about-signature" data-reveal>

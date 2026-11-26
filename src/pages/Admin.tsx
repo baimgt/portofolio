@@ -28,6 +28,7 @@ import {
   Pencil,
   Plus,
   Save,
+  Search,
   ShieldCheck,
   Sparkles,
   Trash2,
@@ -47,6 +48,7 @@ import type {
 } from '../types';
 import Modal from '../components/Modal';
 import { LanguageEditor } from '../components/admin/LanguageEditor';
+import { SeoEditor } from '../components/admin/SeoEditor';
 import { SoundEditor } from '../components/admin/SoundEditor';
 import { Field, ImageField } from '../components/admin/Fields';
 import {
@@ -68,6 +70,7 @@ type Tab =
   | 'contact'
   | 'language'
   | 'sound'
+  | 'seo'
   | 'inbox'
   | 'security';
 const tabs: { id: Tab; label: string; icon: typeof UserRound }[] = [
@@ -82,6 +85,7 @@ const tabs: { id: Tab; label: string; icon: typeof UserRound }[] = [
   { id: 'contact', label: 'Informasi kontak', icon: Mail },
   { id: 'language', label: 'Bahasa', icon: Languages },
   { id: 'sound', label: 'Suara & musik', icon: Volume2 },
+  { id: 'seo', label: 'SEO & Google', icon: Search },
   { id: 'inbox', label: 'Pesan masuk', icon: Mail },
   { id: 'security', label: 'Keamanan', icon: ShieldCheck },
 ];
@@ -694,6 +698,7 @@ export default function Admin({
     'contact',
     'language',
     'sound',
+    'seo',
   ].includes(tab);
   const unread = messages.filter((message) => !message.is_read).length;
   const newProject: Project = {
@@ -1238,6 +1243,13 @@ export default function Admin({
                   value={draft.settings}
                   onChange={(value) => updateSection('settings', value)}
                   onError={setError}
+                />
+              )}
+              {tab === 'seo' && (
+                <SeoEditor
+                  value={draft.settings}
+                  profile={draft.profile}
+                  onChange={(value) => updateSection('settings', value)}
                 />
               )}
               {tab === 'pages' && (

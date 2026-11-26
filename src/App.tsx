@@ -7,6 +7,7 @@ import { api } from './lib/api';
 import Header from './components/Header';
 import { applyLanguage, effectiveLanguage } from './lib/i18n';
 import { soundEngine } from './lib/sound';
+import { syncSeoMetadata } from './lib/seo';
 import { PageLoader, reducedMotion, smoothScrollTo } from './components/Motion';
 import Portfolio from './pages/Portfolio';
 import ProjectDetail from './pages/ProjectDetail';
@@ -56,11 +57,13 @@ export default function App() {
       window.removeEventListener('popstate', pop);
     };
   }, [refresh]);
+  const slug = route.startsWith('/projects/')
+    ? route.slice('/projects/'.length).replace(/\/$/, '')
+    : '';
+  const project = content.projects.find((item) => item.slug === slug);
   useEffect(() => {
-    document.title = route.startsWith('/admin')
-      ? `${content.profile.brand}. / Studio`
-      : `${content.profile.name} - ${content.profile.role}`;
-  }, [content.profile, route]);
+    syncSeoMetadata({ content, route, project });
+  }, [content, route, project]);
   const navigate = useCallback((to: string) => {
     if (transitionPhase.current === 'entering') return;
     const target = new URL(to, window.location.origin);
@@ -119,10 +122,6 @@ export default function App() {
   useEffect(() => {
     if (isAdmin) soundEngine.stop();
   }, [isAdmin]);
-  const slug = route.startsWith('/projects/')
-    ? route.slice('/projects/'.length).replace(/\/$/, '')
-    : '';
-  const project = content.projects.find((item) => item.slug === slug);
   return (
     <>
       <a className="skip-link" href="#main-content">

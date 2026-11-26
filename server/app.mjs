@@ -23,6 +23,22 @@ const safeAudioUrl = (value) =>
     /^\/(audio|uploads)\/[a-zA-Z0-9._/-]+$/.test(value));
 const volumeValid = (value) =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100;
+const safeSiteUrl = (value) =>
+  text(value, 300) &&
+  (value === '' || /^https:\/\/[a-zA-Z0-9.-]+(?::[0-9]+)?\/?$/.test(value.trim()));
+const verificationValid = (value) =>
+  text(value, 200) && /^[a-zA-Z0-9._-]*$/.test(value.trim());
+const normalizeOrigin = (value) => {
+  const cleaned = typeof value === 'string' ? value.trim().replace(/\/+$/, '') : '';
+  return cleaned || 'https://ibrahimabdullah.biz.id';
+};
+const escapeXml = (str) =>
+  String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 const stringList = (value, max = 30) =>
   Array.isArray(value) && value.length <= max && value.every((item) => text(item, 150));
 const projectValid = (p) =>
@@ -339,6 +355,14 @@ export async function createExpressApp({
     const soundUrl = settings?.soundUrl ?? current.settings?.soundUrl ?? '';
     const soundVolume = settings?.soundVolume ?? current.settings?.soundVolume ?? 80;
     const sfxVolume = settings?.sfxVolume ?? current.settings?.sfxVolume ?? 80;
+    const siteUrl =
+      settings?.siteUrl ?? current.settings?.siteUrl ?? 'https://ibrahimabdullah.biz.id';
+    const seoName = settings?.seoName ?? current.settings?.seoName ?? 'Ibrahim Abdullah';
+    const seoTitle = settings?.seoTitle ?? current.settings?.seoTitle ?? '';
+    const seoDescription = settings?.seoDescription ?? current.settings?.seoDescription ?? '';
+    const seoKeywords = settings?.seoKeywords ?? current.settings?.seoKeywords ?? '';
+    const googleVerification =
+      settings?.googleVerification ?? current.settings?.googleVerification ?? '';
     const profileKeys = Object.keys(current.profile).filter((key) => key !== 'available');
     if (
       !settings ||
@@ -347,6 +371,12 @@ export async function createExpressApp({
       !safeAudioUrl(soundUrl) ||
       !volumeValid(soundVolume) ||
       !volumeValid(sfxVolume) ||
+      !safeSiteUrl(siteUrl) ||
+      !text(seoName, 120) ||
+      !text(seoTitle, 200) ||
+      !text(seoDescription, 500) ||
+      !text(seoKeywords, 500) ||
+      !verificationValid(googleVerification) ||
       !profile ||
       !pages ||
       !profileKeys.every((key) => text(profile[key], 6000)) ||
@@ -403,6 +433,12 @@ export async function createExpressApp({
           soundUrl,
           soundVolume: Math.round(soundVolume),
           sfxVolume: Math.round(sfxVolume),
+          siteUrl: siteUrl.trim().replace(/\/+$/, ''),
+          seoName: seoName.trim(),
+          seoTitle: seoTitle.trim(),
+          seoDescription: seoDescription.trim(),
+          seoKeywords: seoKeywords.trim(),
+          googleVerification: googleVerification.trim(),
         },
         education,
         frameworks,
@@ -550,6 +586,129 @@ export async function createExpressApp({
       createdAt: new Date().toISOString(),
     });
     res.status(201).json({ ok: true });
+  });
+
+  app.get('/robots.txt', async (_req, res) => {
+    const content = await storage.getContent();
+    const origin = normalizeOrigin(content.settings?.siteUrl);
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.send(
+      [
+        'User-agent: *',
+        'Allow: /',
+        'Disallow: /admin',
+        'Disallow: /api/',
+        '',
+        'User-agent: Googlebot',
+        'Allow: /',
+        'Disallow: /admin',
+        'Disallow: /api/',
+        '',
+        'User-agent: Google-Extended',
+        'Allow: /',
+        'Disallow: /admin',
+        '',
+        'User-agent: OAI-SearchBot',
+        'Allow: /',
+        'Disallow: /admin',
+        '',
+        'User-agent: GPTBot',
+        'Allow: /',
+        'Disallow: /admin',
+        '',
+        'User-agent: PerplexityBot',
+        'Allow: /',
+        'Disallow: /admin',
+        '',
+        'User-agent: ClaudeBot',
+        'Allow: /',
+        'Disallow: /admin',
+        '',
+        `Sitemap: ${origin}/sitemap.xml`,
+      ].join('\n'),
+    );
+  });
+
+  app.get('/sitemap.xml', async (_req, res) => {
+    const content = await storage.getContent();
+    const origin = normalizeOrigin(content.settings?.siteUrl);
+    const today = new Date().toISOString().slice(0, 10);
+    const entries = [
+      { loc: `${origin}/`, changefreq: 'weekly', priority: '1.0' },
+      ...(content.projects || []).map((project) => ({
+        loc: `${origin}/projects/${project.slug}`,
+        changefreq: 'monthly',
+        priority: '0.8',
+      })),
+    ];
+    const xml = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+      ...entries.map(
+        (entry) =>
+          `  <url>\n    <loc>${escapeXml(entry.loc)}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${entry.changefreq}</changefreq>\n    <priority>${entry.priority}</priority>\n  </url>`,
+      ),
+      '</urlset>',
+    ].join('\n');
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.send(xml);
+  });
+
+  app.get('/llms.txt', async (_req, res) => {
+    const content = await storage.getContent();
+    const origin = normalizeOrigin(content.settings?.siteUrl);
+    const personName = content.settings?.seoName?.trim() || content.profile.name;
+    const socials = [
+      content.profile.github && `- GitHub: ${content.profile.github}`,
+      content.profile.linkedin && `- LinkedIn: ${content.profile.linkedin}`,
+      content.profile.instagram && `- Instagram: ${content.profile.instagram}`,
+    ]
+      .filter((line) => line && !/https:\/\/(github\.com|www\.linkedin\.com|www\.instagram\.com)\/?$/.test(line))
+      .join('\n');
+    const lines = [
+      `# ${personName}`,
+      '',
+      `> ${content.profile.role} berbasis di ${content.profile.location}. Website portfolio resmi: ${origin}/`,
+      '',
+      '## Ringkasan Profil',
+      `- Nama Lengkap: ${personName}`,
+      ...(content.profile.firstName && content.profile.firstName !== personName
+        ? [`- Nama Panggilan / Brand: ${content.profile.firstName}`]
+        : []),
+      `- Profesi: ${content.profile.role}`,
+      `- Lokasi: ${content.profile.location}`,
+      `- Domain Resmi: ${origin}/`,
+      `- Email: ${content.profile.email}`,
+      ...(socials ? [socials] : []),
+      '',
+      '## Tentang',
+      content.profile.intro,
+      content.profile.about,
+      content.profile.aboutMore,
+      '',
+      '## Layanan & Keahlian',
+      ...(content.skills || []).map(
+        (s) => `- **${s.title}**: ${s.description} (${(s.tools || []).join(', ')})`,
+      ),
+      '',
+      '## Teknologi Utama',
+      ...(content.frameworks || []).map((f) => `- **${f.name}** (${f.category}): ${f.description}`),
+      '',
+      '## Pendidikan',
+      ...(content.education || []).map(
+        (e) => `- **${e.school}** (${e.period}) — ${e.degree}, ${e.location}`,
+      ),
+      '',
+      '## Karya & Project Pilihan',
+      ...(content.projects || []).map(
+        (p) => `- [${p.title}](${origin}/projects/${p.slug}) (${p.category}, ${p.year}): ${p.summary}`,
+      ),
+    ];
+    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.send(lines.filter((line) => line !== undefined).join('\n'));
   });
 
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Endpoint tidak ditemukan.' }));

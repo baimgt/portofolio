@@ -246,11 +246,39 @@ test('Portfolio API: authentication, persistence, project CRUD, uploads, and inb
       saved.settings.soundUrl = uploadedAudio.body.url;
       saved.settings.soundVolume = 92;
       saved.settings.sfxVolume = 65;
+      saved.settings.seoName = 'Ibrahim Abdullah';
+      saved.settings.siteUrl = 'https://ibrahimabdullah.biz.id';
       const updatedSound = await request('/admin/content', { method: 'PUT', body: saved });
       assert.equal(updatedSound.status, 200);
       assert.equal(updatedSound.body.settings.soundUrl, uploadedAudio.body.url);
       assert.equal(updatedSound.body.settings.soundVolume, 92);
       assert.equal(updatedSound.body.settings.sfxVolume, 65);
+      assert.equal(updatedSound.body.settings.seoName, 'Ibrahim Abdullah');
+      assert.equal(updatedSound.body.settings.siteUrl, 'https://ibrahimabdullah.biz.id');
+
+      const badSiteUrl = structuredClone(saved);
+      badSiteUrl.settings.siteUrl = 'http://insecure.example';
+      assert.equal(
+        (await request('/admin/content', { method: 'PUT', body: badSiteUrl })).status,
+        400,
+      );
+
+      const robots = await fetch(`${base}/robots.txt`);
+      assert.equal(robots.status, 200);
+      const robotsText = await robots.text();
+      assert.match(robotsText, /Sitemap: https:\/\/ibrahimabdullah\.biz\.id\/sitemap\.xml/);
+      assert.match(robotsText, /Google-Extended/);
+
+      const sitemap = await fetch(`${base}/sitemap.xml`);
+      assert.equal(sitemap.status, 200);
+      const sitemapXml = await sitemap.text();
+      assert.match(sitemapXml, /https:\/\/ibrahimabdullah\.biz\.id\/projects\/forma-studio/);
+
+      const llms = await fetch(`${base}/llms.txt`);
+      assert.equal(llms.status, 200);
+      const llmsText = await llms.text();
+      assert.match(llmsText, /# Ibrahim Abdullah/);
+      assert.match(llmsText, /https:\/\/ibrahimabdullah\.biz\.id\//);
     });
     await t.test('Contact messages are stored, readable, markable, and deletable', async () => {
       assert.equal(

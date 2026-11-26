@@ -110,6 +110,12 @@ export interface AppSettings {
   soundUrl?: string;
   soundVolume?: number;
   sfxVolume?: number;
+  siteUrl?: string;
+  seoName?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
+  googleVerification?: string;
 }
 
 export interface Content {

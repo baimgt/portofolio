@@ -123,6 +123,18 @@ test('Vercel serverless handler handles rewritten /api and /uploads routes clean
     assert.equal(savedAudio.body.settings.soundUrl, uploadedAudio.body.url);
     assert.equal(savedAudio.body.settings.soundVolume, 95);
     assert.equal(savedAudio.body.settings.sfxVolume, 70);
+
+    const robotsRes = await fetch(`${base}/api?__path=/robots.txt`);
+    assert.equal(robotsRes.status, 200);
+    assert.match(await robotsRes.text(), /Sitemap: https:\/\/ibrahimabdullah\.biz\.id\/sitemap\.xml/);
+
+    const sitemapRes = await fetch(`${base}/api?__path=/sitemap.xml`);
+    assert.equal(sitemapRes.status, 200);
+    assert.match(await sitemapRes.text(), /https:\/\/ibrahimabdullah\.biz\.id\//);
+
+    const llmsRes = await fetch(`${base}/api?__path=/llms.txt`);
+    assert.equal(llmsRes.status, 200);
+    assert.match(await llmsRes.text(), /# Ibrahim Abdullah/);
   } finally {
     await new Promise((done) => server.close(done));
     rmSync(vercelTmp, { recursive: true, force: true });

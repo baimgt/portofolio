@@ -2314,3 +2314,52 @@ html[data-theme='light'] .lang-popover {
     margin-left: 0;
   }
 }
+
+.about-identity-byline {
+  color: #b7c9e6 !important;
+  font-size: 13px;
+  line-height: 1.75;
+  margin-bottom: 14px;
+}
+.about-identity-byline strong {
+  color: #eef4ff;
+  font-weight: 600;
+}
+html[data-theme='light'] .about-identity-byline {
+  color: #364e73 !important;
+}
+html[data-theme='light'] .about-identity-byline strong {
+  color: #162237;
+}
+.admin-serp-preview {
+  padding: 18px 20px;
+  border-radius: 10px;
+  border: 1px solid #5584d733;
+  background: linear-gradient(135deg, #16244140, #0b132090);
+}
+.admin-serp-preview .serp-url {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: #93accf;
+}
+.admin-serp-preview h3 {
+  margin: 6px 0 6px;
+  font-size: 17px;
+  font-weight: 500;
+  color: #8ab4f8;
+  line-height: 1.35;
+}
+.admin-serp-preview p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.65;
+  color: #9bb0cf;
+}
+.admin-seo-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
