@@ -6,6 +6,7 @@ import type { Content } from './types';
 import { api } from './lib/api';
 import Header from './components/Header';
 import { applyLanguage, effectiveLanguage } from './lib/i18n';
+import { soundEngine } from './lib/sound';
 import { PageLoader, reducedMotion, smoothScrollTo } from './components/Motion';
 import Portfolio from './pages/Portfolio';
 import ProjectDetail from './pages/ProjectDetail';
@@ -108,6 +109,16 @@ export default function App() {
   useEffect(() => {
     if (!isAdmin) applyLanguage(language);
   }, [language, isAdmin, visitorLang]);
+  useEffect(() => {
+    soundEngine.configure({
+      soundUrl: content.settings?.soundUrl ?? '',
+      soundVolume: content.settings?.soundVolume ?? 80,
+      sfxVolume: content.settings?.sfxVolume ?? 80,
+    });
+  }, [content.settings?.soundUrl, content.settings?.soundVolume, content.settings?.sfxVolume]);
+  useEffect(() => {
+    if (isAdmin) soundEngine.stop();
+  }, [isAdmin]);
   const slug = route.startsWith('/projects/')
     ? route.slice('/projects/'.length).replace(/\/$/, '')
     : '';

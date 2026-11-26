@@ -318,6 +318,9 @@
   ],
   "settings": {
     "languageMode": false,
-    "language": "id"
+    "language": "id",
+    "soundUrl": "",
+    "soundVolume": 80,
+    "sfxVolume": 80
   }
 }

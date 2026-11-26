@@ -16,6 +16,13 @@ const safeUrl = (value, local = false) =>
   (value === '' ||
     /^https:\/\/[^\s]+$/.test(value) ||
     (local && /^\/(images|uploads)\/[a-zA-Z0-9._/-]+$/.test(value)));
+const safeAudioUrl = (value) =>
+  text(value, 2048) &&
+  (value === '' ||
+    /^https:\/\/[^\s]+$/.test(value) ||
+    /^\/(audio|uploads)\/[a-zA-Z0-9._/-]+$/.test(value));
+const volumeValid = (value) =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100;
 const stringList = (value, max = 30) =>
   Array.isArray(value) && value.length <= max && value.every((item) => text(item, 150));
 const projectValid = (p) =>
@@ -81,6 +88,61 @@ const MIME_EXT = {
   'image/avif': 'avif',
 };
 
+const AUDIO_MIME_SPEC = {
+  'audio/mpeg': { ext: 'mp3', mime: 'audio/mpeg' },
+  'audio/mp3': { ext: 'mp3', mime: 'audio/mpeg' },
+  'audio/wav': { ext: 'wav', mime: 'audio/wav' },
+  'audio/wave': { ext: 'wav', mime: 'audio/wav' },
+  'audio/x-wav': { ext: 'wav', mime: 'audio/wav' },
+  'audio/ogg': { ext: 'ogg', mime: 'audio/ogg' },
+  'application/ogg': { ext: 'ogg', mime: 'audio/ogg' },
+  'audio/mp4': { ext: 'm4a', mime: 'audio/mp4' },
+  'audio/x-m4a': { ext: 'm4a', mime: 'audio/mp4' },
+  'audio/m4a': { ext: 'm4a', mime: 'audio/mp4' },
+  'audio/aac': { ext: 'aac', mime: 'audio/aac' },
+  'audio/x-aac': { ext: 'aac', mime: 'audio/aac' },
+  'audio/webm': { ext: 'webm', mime: 'audio/webm' },
+  'audio/flac': { ext: 'flac', mime: 'audio/flac' },
+  'audio/x-flac': { ext: 'flac', mime: 'audio/flac' },
+};
+
+function hasValidAudioMagicBytes(buffer, mimetype) {
+  const spec = AUDIO_MIME_SPEC[mimetype];
+  if (!spec || !Buffer.isBuffer(buffer) || buffer.length < 12) return false;
+  if (spec.ext === 'mp3') {
+    return (
+      buffer.subarray(0, 3).toString('ascii') === 'ID3' ||
+      (buffer[0] === 0xff && (buffer[1] & 0xe0) === 0xe0)
+    );
+  }
+  if (spec.ext === 'wav') {
+    return (
+      buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+      buffer.subarray(8, 12).toString('ascii') === 'WAVE'
+    );
+  }
+  if (spec.ext === 'ogg') {
+    return buffer.subarray(0, 4).toString('ascii') === 'OggS';
+  }
+  if (spec.ext === 'm4a') {
+    return buffer.subarray(4, 8).toString('ascii') === 'ftyp';
+  }
+  if (spec.ext === 'aac') {
+    return (
+      (buffer[0] === 0xff && (buffer[1] & 0xf0) === 0xf0) ||
+      buffer.subarray(0, 4).toString('ascii') === 'ADIF' ||
+      buffer.subarray(4, 8).toString('ascii') === 'ftyp'
+    );
+  }
+  if (spec.ext === 'webm') {
+    return buffer[0] === 0x1a && buffer[1] === 0x45 && buffer[2] === 0xdf && buffer[3] === 0xa3;
+  }
+  if (spec.ext === 'flac') {
+    return buffer.subarray(0, 4).toString('ascii') === 'fLaC';
+  }
+  return false;
+}
+
 let sharpLoader;
 async function loadSharp() {
   if (sharpLoader === undefined) {
@@ -92,12 +154,15 @@ async function loadSharp() {
 }
 
 export function attachApiErrorHandler(app) {
-  app.use((error, _req, res, _next) => {
+  app.use((error, req, res, _next) => {
     console.error(error?.message || error);
+    const isAudioLimit = req.path?.includes('upload-audio');
     res.status(error instanceof multer.MulterError ? 400 : 500).json({
       error:
         error instanceof multer.MulterError
-          ? 'Gambar terlalu besar. Maksimal 5 MB.'
+          ? isAudioLimit
+            ? 'File audio terlalu besar. Maksimal 4 MB.'
+            : 'Gambar terlalu besar. Maksimal 5 MB.'
           : 'Terjadi kesalahan server. Silakan coba lagi.',
     });
   });
@@ -107,6 +172,7 @@ export async function createExpressApp({
   storage,
   production = process.env.NODE_ENV === 'production',
   maxUploadBytes = 5 * 1024 * 1024,
+  maxAudioBytes = 4 * 1024 * 1024,
 }) {
   const app = express();
   app.disable('x-powered-by');
@@ -132,6 +198,7 @@ export async function createExpressApp({
               ],
               frameSrc: ['https://translate.google.com'],
               imgSrc: ["'self'", 'https:', 'data:', 'blob:'],
+              mediaSrc: ["'self'", 'https:', 'data:', 'blob:'],
               fontSrc: ["'self'", 'data:'],
               connectSrc: ["'self'", 'https://translate.googleapis.com', 'https://translate.google.com'],
               objectSrc: ["'none'"],
@@ -269,11 +336,17 @@ export async function createExpressApp({
     const education = req.body?.education ?? current.education;
     const frameworks = req.body?.frameworks ?? current.frameworks;
     const settings = req.body?.settings ?? current.settings;
+    const soundUrl = settings?.soundUrl ?? current.settings?.soundUrl ?? '';
+    const soundVolume = settings?.soundVolume ?? current.settings?.soundVolume ?? 80;
+    const sfxVolume = settings?.sfxVolume ?? current.settings?.sfxVolume ?? 80;
     const profileKeys = Object.keys(current.profile).filter((key) => key !== 'available');
     if (
       !settings ||
       typeof settings.languageMode !== 'boolean' ||
       !LANGUAGE_CODES.has(settings.language) ||
+      !safeAudioUrl(soundUrl) ||
+      !volumeValid(soundVolume) ||
+      !volumeValid(sfxVolume) ||
       !profile ||
       !pages ||
       !profileKeys.every((key) => text(profile[key], 6000)) ||
@@ -324,7 +397,13 @@ export async function createExpressApp({
         skills,
         card: cleanCard,
         copy: cleanCopy,
-        settings: { languageMode: settings.languageMode, language: settings.language },
+        settings: {
+          languageMode: settings.languageMode,
+          language: settings.language,
+          soundUrl,
+          soundVolume: Math.round(soundVolume),
+          sfxVolume: Math.round(sfxVolume),
+        },
         education,
         frameworks,
       }),
@@ -410,6 +489,27 @@ export async function createExpressApp({
     }
   });
 
+  const audioUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: maxAudioBytes, files: 1 },
+    fileFilter: (_req, file, cb) => cb(null, Boolean(AUDIO_MIME_SPEC[file.mimetype])),
+  });
+
+  app.post('/api/admin/upload-audio', audioUpload.single('audio'), async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({
+        error: 'Pilih file audio MP3, WAV, OGG, M4A, AAC, WebM, atau FLAC (maksimal 4 MB).',
+      });
+    }
+    if (!hasValidAudioMagicBytes(req.file.buffer, req.file.mimetype)) {
+      return res.status(400).json({ error: 'File audio tidak valid atau formatnya tidak cocok.' });
+    }
+    const spec = AUDIO_MIME_SPEC[req.file.mimetype];
+    const filename = `${randomUUID()}.${spec.ext}`;
+    const url = await storage.saveUpload(filename, spec.mime, req.file.buffer);
+    return res.status(201).json({ url });
+  });
+
   app.get('/api/admin/messages', async (_req, res) => res.json(await storage.listMessages()));
   app.patch('/api/admin/messages/:id', async (req, res) => {
     await storage.markMessageRead(req.params.id);
@@ -472,9 +572,36 @@ export async function createExpressApp({
       }
       const file = await storage.getUpload(filename);
       if (!file) return res.status(404).end();
+      const total = file.buffer.length;
+      res.setHeader('Accept-Ranges', 'bytes');
       res.setHeader('Content-Type', file.mime);
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
       res.setHeader('X-Content-Type-Options', 'nosniff');
+      const rangeHeader = req.headers.range;
+      if (rangeHeader) {
+        const match = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader.trim());
+        if (!match) {
+          res.setHeader('Content-Range', `bytes */${total}`);
+          return res.status(416).end();
+        }
+        let start = match[1] ? Number.parseInt(match[1], 10) : 0;
+        let end = match[2] ? Number.parseInt(match[2], 10) : total - 1;
+        if (!match[1] && match[2]) {
+          start = Math.max(0, total - Number.parseInt(match[2], 10));
+          end = total - 1;
+        }
+        if (Number.isNaN(start) || Number.isNaN(end) || start > end || start >= total) {
+          res.setHeader('Content-Range', `bytes */${total}`);
+          return res.status(416).end();
+        }
+        end = Math.min(end, total - 1);
+        const chunk = file.buffer.subarray(start, end + 1);
+        res.status(206);
+        res.setHeader('Content-Range', `bytes ${start}-${end}/${total}`);
+        res.setHeader('Content-Length', String(chunk.length));
+        return res.send(chunk);
+      }
+      res.setHeader('Content-Length', String(total));
       return res.send(file.buffer);
     });
   }

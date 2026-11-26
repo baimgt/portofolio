@@ -32,6 +32,7 @@ import {
   Sparkles,
   Trash2,
   UserRound,
+  Volume2,
   X,
 } from 'lucide-react';
 import { api, setCsrfToken, uploadImage } from '../lib/api';
@@ -46,6 +47,7 @@ import type {
 } from '../types';
 import Modal from '../components/Modal';
 import { LanguageEditor } from '../components/admin/LanguageEditor';
+import { SoundEditor } from '../components/admin/SoundEditor';
 import { Field, ImageField } from '../components/admin/Fields';
 import {
   CardEditor,
@@ -65,6 +67,7 @@ type Tab =
   | 'pages'
   | 'contact'
   | 'language'
+  | 'sound'
   | 'inbox'
   | 'security';
 const tabs: { id: Tab; label: string; icon: typeof UserRound }[] = [
@@ -78,6 +81,7 @@ const tabs: { id: Tab; label: string; icon: typeof UserRound }[] = [
   { id: 'pages', label: 'Konten halaman', icon: FileText },
   { id: 'contact', label: 'Informasi kontak', icon: Mail },
   { id: 'language', label: 'Bahasa', icon: Languages },
+  { id: 'sound', label: 'Suara & musik', icon: Volume2 },
   { id: 'inbox', label: 'Pesan masuk', icon: Mail },
   { id: 'security', label: 'Keamanan', icon: ShieldCheck },
 ];
@@ -689,6 +693,7 @@ export default function Admin({
     'pages',
     'contact',
     'language',
+    'sound',
   ].includes(tab);
   const unread = messages.filter((message) => !message.is_read).length;
   const newProject: Project = {
@@ -1226,6 +1231,13 @@ export default function Admin({
                 <LanguageEditor
                   value={draft.settings}
                   onChange={(value) => updateSection('settings', value)}
+                />
+              )}
+              {tab === 'sound' && (
+                <SoundEditor
+                  value={draft.settings}
+                  onChange={(value) => updateSection('settings', value)}
+                  onError={setError}
                 />
               )}
               {tab === 'pages' && (

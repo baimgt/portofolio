@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 
 type Listener = (enabled: boolean) => void;
 
+export interface SoundConfig {
+  soundUrl: string;
+  soundVolume: number;
+  sfxVolume: number;
+}
+
 /**
- * Letakkan file lagu kamu di folder `public/audio/` dengan salah satu nama berikut:
- *   - `public/audio/bgm.mp3`  (disarankan)
- *   - `public/audio/bgm.ogg`
- *   - `public/audio/bgm.wav`
- *   - `public/audio/music.mp3`
- * Atau ubah daftar CUSTOM_TRACK_CANDIDATES di bawah jika memakai nama file lain.
+ * Fallback lokal di folder `public/audio/` jika belum ada audio yang diunggah di Studio Admin.
  */
 export const CUSTOM_TRACK_CANDIDATES = [
   '/audio/bgm.mp3',
@@ -17,7 +18,10 @@ export const CUSTOM_TRACK_CANDIDATES = [
   '/audio/music.mp3',
 ];
 
-const TRACK_TARGET_VOLUME = 0.42;
+const clampVolume = (value: number | undefined, fallback = 80) =>
+  typeof value === 'number' && Number.isFinite(value)
+    ? Math.max(0, Math.min(100, Math.round(value)))
+    : fallback;
 
 const INTERACTIVE_CLICK_SELECTOR =
   'button:not(.sound-toggle):not(.mobile-sound-toggle):not(.mobile-sound-drawer-toggle):not(.badge-tilt), a, [role="tab"]';
@@ -36,7 +40,12 @@ class SoundEngine {
   private lastHoveredNode: Element | null = null;
   private delegatesBound = false;
 
-  // Custom BGM track state
+  // Dynamic sound & volume configuration (synced from Studio Admin / API content)
+  private configuredUrl = '';
+  private soundVolume = 80;
+  private sfxVolume = 80;
+
+  // BGM track state
   private trackUrl: string | null | undefined = undefined;
   private trackLookup: Promise<string | null> | null = null;
   private bgmAudio: HTMLAudioElement | null = null;
@@ -44,6 +53,90 @@ class SoundEngine {
 
   isEnabled() {
     return this.enabled;
+  }
+
+  getConfig(): SoundConfig {
+    return {
+      soundUrl: this.configuredUrl,
+      soundVolume: this.soundVolume,
+      sfxVolume: this.sfxVolume,
+    };
+  }
+
+  private bgmTargetVolume(): number {
+    return clampVolume(this.soundVolume, 80) / 100;
+  }
+
+  private masterTargetGain(): number {
+    return clampVolume(this.sfxVolume, 80) / 100;
+  }
+
+  configure(next: Partial<SoundConfig>) {
+    const nextUrl =
+      next.soundUrl !== undefined
+        ? typeof next.soundUrl === 'string'
+          ? next.soundUrl.trim()
+          : ''
+        : this.configuredUrl;
+    const urlChanged = nextUrl !== this.configuredUrl;
+    if (urlChanged) {
+      this.configuredUrl = nextUrl;
+      this.trackUrl = undefined;
+      this.trackLookup = null;
+      this.disposeBgmAudio();
+    }
+
+    if (next.soundVolume !== undefined) {
+      const vol = clampVolume(next.soundVolume, this.soundVolume);
+      if (vol !== this.soundVolume) {
+        this.soundVolume = vol;
+        if (this.enabled && this.bgmAudio && !urlChanged) {
+          const target = this.bgmTargetVolume();
+          if (target > 0 && this.bgmAudio.paused) {
+            void this.bgmAudio
+              .play()
+              .then(() => {
+                if (this.enabled) this.fadeBgmVolume(this.bgmTargetVolume(), 180);
+              })
+              .catch(() => {});
+          } else {
+            this.fadeBgmVolume(target, 120);
+          }
+        }
+      }
+    }
+
+    if (next.sfxVolume !== undefined) {
+      const sfx = clampVolume(next.sfxVolume, this.sfxVolume);
+      if (sfx !== this.sfxVolume) {
+        this.sfxVolume = sfx;
+        if (this.enabled && this.ctx && this.masterGain) {
+          const now = this.ctx.currentTime;
+          this.masterGain.gain.cancelScheduledValues(now);
+          this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
+          this.masterGain.gain.linearRampToValueAtTime(this.masterTargetGain(), now + 0.08);
+        }
+      }
+    }
+
+    if (urlChanged && this.enabled) {
+      void this.startCustomTrackIfPresent().then((hasCustomTrack) => {
+        if (!this.enabled) return;
+        this.setAmbientLevel(hasCustomTrack ? 0 : 1, 0.35);
+      });
+    }
+  }
+
+  private disposeBgmAudio() {
+    if (this.volumeRaf) {
+      cancelAnimationFrame(this.volumeRaf);
+      this.volumeRaf = 0;
+    }
+    if (this.bgmAudio) {
+      this.bgmAudio.pause();
+      this.bgmAudio.removeAttribute('src');
+      this.bgmAudio = null;
+    }
   }
 
   subscribe(listener: Listener) {
@@ -58,6 +151,10 @@ class SoundEngine {
   }
 
   private async resolveCustomTrack(): Promise<string | null> {
+    if (this.configuredUrl) {
+      this.trackUrl = this.configuredUrl;
+      return this.configuredUrl;
+    }
     if (this.trackUrl !== undefined) return this.trackUrl;
     if (this.trackLookup) return this.trackLookup;
 
@@ -91,11 +188,12 @@ class SoundEngine {
     if (this.volumeRaf) cancelAnimationFrame(this.volumeRaf);
 
     const audio = this.bgmAudio;
+    const clampedTarget = Math.max(0, Math.min(1, target));
     const start = audio.volume;
-    const delta = target - start;
+    const delta = clampedTarget - start;
     if (Math.abs(delta) < 0.005) {
-      audio.volume = target;
-      if (pauseOnZero && target === 0) audio.pause();
+      audio.volume = clampedTarget;
+      if (pauseOnZero && clampedTarget === 0) audio.pause();
       return;
     }
 
@@ -108,7 +206,7 @@ class SoundEngine {
         this.volumeRaf = requestAnimationFrame(step);
       } else {
         this.volumeRaf = 0;
-        if (pauseOnZero && target === 0) audio.pause();
+        if (pauseOnZero && clampedTarget === 0) audio.pause();
       }
     };
     this.volumeRaf = requestAnimationFrame(step);
@@ -132,7 +230,7 @@ class SoundEngine {
         this.bgmAudio.pause();
         return false;
       }
-      this.fadeBgmVolume(TRACK_TARGET_VOLUME, 650);
+      this.fadeBgmVolume(this.bgmTargetVolume(), 650);
       return true;
     } catch {
       return false;
@@ -149,7 +247,7 @@ class SoundEngine {
     if (!this.ctx) {
       const ctx = new AudioCtx();
       const compressor = ctx.createDynamicsCompressor();
-      compressor.threshold.value = -18;
+      compressor.threshold.value = -14;
       compressor.ratio.value = 4;
       compressor.connect(ctx.destination);
 
@@ -176,16 +274,16 @@ class SoundEngine {
 
     const filter = ctx.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.value = 390;
+    filter.frequency.value = 440;
     filter.Q.value = 0.7;
 
     filter.connect(ambientGain);
     ambientGain.connect(this.masterGain);
 
     const voices: Array<[number, OscillatorType, number]> = [
-      [110, 'sine', 0.017],
-      [164.81, 'sine', 0.011],
-      [220, 'triangle', 0.005],
+      [110, 'sine', 0.06],
+      [164.81, 'sine', 0.04],
+      [220, 'triangle', 0.02],
     ];
 
     voices.forEach(([freq, type, level], idx) => {
@@ -204,7 +302,7 @@ class SoundEngine {
     const lfoDepth = ctx.createGain();
     lfo.type = 'sine';
     lfo.frequency.value = 0.11;
-    lfoDepth.gain.value = 135;
+    lfoDepth.gain.value = 150;
     lfo.connect(lfoDepth);
     lfoDepth.connect(filter.frequency);
     lfo.start();
@@ -273,20 +371,19 @@ class SoundEngine {
         this.startAmbient(ctx);
         this.masterGain.gain.cancelScheduledValues(now);
         this.masterGain.gain.setValueAtTime(Math.max(0.0001, this.masterGain.gain.value), now);
-        this.masterGain.gain.linearRampToValueAtTime(1, now + 0.18);
+        this.masterGain.gain.linearRampToValueAtTime(this.masterTargetGain(), now + 0.18);
 
-        this.playToggleChime(true);
+        if (this.sfxVolume > 0) this.playToggleChime(true);
         void this.startCustomTrackIfPresent().then((hasCustomTrack) => {
           if (!this.enabled) return;
           if (hasCustomTrack) {
-            // Duck built-in synth pad cleanly when the custom song is playing.
             this.setAmbientLevel(0, 0.35);
           } else {
             this.setAmbientLevel(1, 0.75);
           }
         });
       } else {
-        this.playToggleChime(false);
+        if (this.sfxVolume > 0) this.playToggleChime(false);
         this.fadeBgmVolume(0, 220, true);
         this.setAmbientLevel(0, 0.14);
         this.masterGain.gain.cancelScheduledValues(now);
@@ -306,6 +403,36 @@ class SoundEngine {
 
     this.notify();
     return next;
+  }
+
+  stop() {
+    if (!this.enabled) return;
+    this.toggle();
+  }
+
+  previewEffect(volumePercent = this.sfxVolume) {
+    if (this.suspendTimer !== null) {
+      window.clearTimeout(this.suspendTimer);
+      this.suspendTimer = null;
+    }
+    const ctx = this.ensureContext();
+    if (!ctx || !this.masterGain) return;
+    const level = clampVolume(volumePercent, 80) / 100;
+    const now = ctx.currentTime;
+    this.masterGain.gain.cancelScheduledValues(now);
+    this.masterGain.gain.setValueAtTime(level, now);
+    this.playToggleChime(true);
+    if (!this.enabled) {
+      this.suspendTimer = window.setTimeout(() => {
+        if (!this.enabled && this.masterGain && this.ctx) {
+          const endNow = this.ctx.currentTime;
+          this.masterGain.gain.cancelScheduledValues(endNow);
+          this.masterGain.gain.setValueAtTime(0, endNow);
+          if (this.ctx.state === 'running') void this.ctx.suspend().catch(() => {});
+        }
+        this.suspendTimer = null;
+      }, 480);
+    }
   }
 
   private playTone(
@@ -338,46 +465,46 @@ class SoundEngine {
   private playToggleChime(on: boolean) {
     if (!this.ctx || !this.masterGain) return;
     if (on) {
-      this.playTone(587.33, 587.33, 0.24, 0.06, 'sine', 0);
-      this.playTone(880, 880, 0.34, 0.055, 'triangle', 0.065);
+      this.playTone(587.33, 587.33, 0.24, 0.14, 'sine', 0);
+      this.playTone(880, 880, 0.34, 0.12, 'triangle', 0.065);
     } else {
-      this.playTone(523.25, 392, 0.14, 0.045, 'sine', 0);
+      this.playTone(523.25, 392, 0.14, 0.1, 'sine', 0);
     }
   }
 
   playClick() {
-    if (!this.enabled || !this.ctx || !this.masterGain) return;
-    this.playTone(760, 480, 0.048, 0.052, 'sine');
-    this.playTone(1480, 1120, 0.026, 0.02, 'triangle');
+    if (!this.enabled || !this.ctx || !this.masterGain || this.sfxVolume <= 0) return;
+    this.playTone(760, 480, 0.048, 0.13, 'sine');
+    this.playTone(1480, 1120, 0.026, 0.05, 'triangle');
   }
 
   playHover() {
-    if (!this.enabled || !this.ctx || !this.masterGain) return;
+    if (!this.enabled || !this.ctx || !this.masterGain || this.sfxVolume <= 0) return;
     const nowMs = performance.now();
     if (nowMs - this.lastHoverTime < 85) return;
     this.lastHoverTime = nowMs;
-    this.playTone(1160, 1280, 0.024, 0.016, 'sine');
+    this.playTone(1160, 1280, 0.024, 0.042, 'sine');
   }
 
   playGrab() {
-    if (!this.enabled || !this.ctx || !this.masterGain) return;
-    this.playTone(360, 540, 0.055, 0.05, 'triangle');
-    this.playTone(1040, 1240, 0.035, 0.022, 'sine', 0.01);
+    if (!this.enabled || !this.ctx || !this.masterGain || this.sfxVolume <= 0) return;
+    this.playTone(360, 540, 0.055, 0.12, 'triangle');
+    this.playTone(1040, 1240, 0.035, 0.055, 'sine', 0.01);
   }
 
   playRelease() {
-    if (!this.enabled || !this.ctx || !this.masterGain) return;
-    this.playTone(520, 320, 0.11, 0.04, 'sine');
-    this.playTone(780, 620, 0.07, 0.018, 'triangle', 0.025);
+    if (!this.enabled || !this.ctx || !this.masterGain || this.sfxVolume <= 0) return;
+    this.playTone(520, 320, 0.11, 0.1, 'sine');
+    this.playTone(780, 620, 0.07, 0.045, 'triangle', 0.025);
   }
 
   playMorph(toAlternate: boolean) {
-    if (!this.enabled || !this.ctx || !this.masterGain) return;
+    if (!this.enabled || !this.ctx || !this.masterGain || this.sfxVolume <= 0) return;
     if (toAlternate) {
-      this.playTone(280, 640, 0.22, 0.045, 'sine');
-      this.playTone(560, 920, 0.18, 0.025, 'triangle', 0.04);
+      this.playTone(280, 640, 0.22, 0.11, 'sine');
+      this.playTone(560, 920, 0.18, 0.06, 'triangle', 0.04);
     } else {
-      this.playTone(620, 300, 0.18, 0.04, 'sine');
+      this.playTone(620, 300, 0.18, 0.1, 'sine');
     }
   }
 }

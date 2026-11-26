@@ -107,6 +107,9 @@ export interface Project {
 export interface AppSettings {
   languageMode: boolean;
   language: string;
+  soundUrl?: string;
+  soundVolume?: number;
+  sfxVolume?: number;
 }
 
 export interface Content {

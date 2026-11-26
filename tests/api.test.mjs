@@ -212,6 +212,46 @@ test('Portfolio API: authentication, persistence, project CRUD, uploads, and inb
       svg.append('image', new Blob(['<svg/>'], { type: 'image/svg+xml' }), 'fake.svg');
       assert.equal((await request('/admin/upload', { method: 'POST', body: svg })).status, 400);
     });
+    await t.test('Audio uploads and sound/volume settings are validated and persisted', async () => {
+      const fakeMp3 = Buffer.concat([Buffer.from('ID3\x04\x00\x00\x00\x00\x00\x00'), Buffer.alloc(64)]);
+      const audioForm = new FormData();
+      audioForm.append('audio', new Blob([fakeMp3], { type: 'audio/mpeg' }), 'bgm.mp3');
+      const uploadedAudio = await request('/admin/upload-audio', { method: 'POST', body: audioForm });
+      assert.equal(uploadedAudio.status, 201);
+      assert.match(uploadedAudio.body.url, /^\/uploads\/.+\.mp3$/);
+
+      const servedAudio = await fetch(base + uploadedAudio.body.url);
+      assert.equal(servedAudio.status, 200);
+      assert.match(servedAudio.headers.get('content-type'), /audio\/mpeg|mpeg/);
+
+      const fakeAudio = new FormData();
+      fakeAudio.append(
+        'audio',
+        new Blob(['<script>not-audio</script>'], { type: 'audio/mpeg' }),
+        'fake.mp3',
+      );
+      assert.equal(
+        (await request('/admin/upload-audio', { method: 'POST', body: fakeAudio })).status,
+        400,
+      );
+
+      const badUrl = structuredClone(saved);
+      badUrl.settings.soundUrl = 'javascript:alert(1)';
+      assert.equal((await request('/admin/content', { method: 'PUT', body: badUrl })).status, 400);
+
+      const badVol = structuredClone(saved);
+      badVol.settings.soundVolume = 150;
+      assert.equal((await request('/admin/content', { method: 'PUT', body: badVol })).status, 400);
+
+      saved.settings.soundUrl = uploadedAudio.body.url;
+      saved.settings.soundVolume = 92;
+      saved.settings.sfxVolume = 65;
+      const updatedSound = await request('/admin/content', { method: 'PUT', body: saved });
+      assert.equal(updatedSound.status, 200);
+      assert.equal(updatedSound.body.settings.soundUrl, uploadedAudio.body.url);
+      assert.equal(updatedSound.body.settings.soundVolume, 92);
+      assert.equal(updatedSound.body.settings.sfxVolume, 65);
+    });
     await t.test('Contact messages are stored, readable, markable, and deletable', async () => {
       assert.equal(
         (

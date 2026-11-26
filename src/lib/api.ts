@@ -15,6 +15,9 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     credentials: 'same-origin',
     cache: 'no-store',
   });
+  if (response.status === 413) {
+    throw new Error('Ukuran file terlalu besar untuk server (maksimal 4 MB di Vercel).');
+  }
   if (!response.headers.get('content-type')?.includes('application/json')) {
     const isLocal =
       typeof window !== 'undefined' &&
@@ -34,5 +37,12 @@ export async function uploadImage(file: File): Promise<string> {
   const form = new FormData();
   form.append('image', file);
   const result = await api<{ url: string }>('/admin/upload', { method: 'POST', body: form });
+  return result.url;
+}
+
+export async function uploadAudio(file: File): Promise<string> {
+  const form = new FormData();
+  form.append('audio', file);
+  const result = await api<{ url: string }>('/admin/upload-audio', { method: 'POST', body: form });
   return result.url;
 }

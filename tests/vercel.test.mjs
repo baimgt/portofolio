@@ -86,6 +86,43 @@ test('Vercel serverless handler handles rewritten /api and /uploads routes clean
     const fetchedImg = await fetch(`${base}/api?__path=${uploaded.body.url}`);
     assert.equal(fetchedImg.status, 200);
     assert.match(fetchedImg.headers.get('content-type'), /webp/);
+
+    const mp3Buf = Buffer.concat([
+      Buffer.from('ID3\x04\x00\x00\x00\x00\x00\x00'),
+      Buffer.from('0123456789abcdefghijklmnopqrstuvwxyz'),
+    ]);
+    const audioForm = new FormData();
+    audioForm.append('audio', new Blob([mp3Buf], { type: 'audio/mpeg' }), 'track.mp3');
+    const uploadedAudio = await call('/api?__path=/api/admin/upload-audio', {
+      method: 'POST',
+      body: audioForm,
+    });
+    assert.equal(uploadedAudio.status, 201);
+    assert.match(uploadedAudio.body.url, /^\/uploads\/.+\.mp3$/);
+
+    const fetchedAudioRange = await fetch(`${base}/api?__path=${uploadedAudio.body.url}`, {
+      headers: { Range: 'bytes=0-9' },
+    });
+    assert.equal(fetchedAudioRange.status, 206);
+    assert.equal(fetchedAudioRange.headers.get('accept-ranges'), 'bytes');
+    assert.match(fetchedAudioRange.headers.get('content-type'), /audio\/mpeg/);
+    assert.equal(
+      fetchedAudioRange.headers.get('content-range'),
+      `bytes 0-9/${mp3Buf.length}`,
+    );
+    assert.equal((await fetchedAudioRange.arrayBuffer()).byteLength, 10);
+
+    updated.settings.soundUrl = uploadedAudio.body.url;
+    updated.settings.soundVolume = 95;
+    updated.settings.sfxVolume = 70;
+    const savedAudio = await call('/api?__path=/api/admin/content', {
+      method: 'PUT',
+      body: updated,
+    });
+    assert.equal(savedAudio.status, 200);
+    assert.equal(savedAudio.body.settings.soundUrl, uploadedAudio.body.url);
+    assert.equal(savedAudio.body.settings.soundVolume, 95);
+    assert.equal(savedAudio.body.settings.sfxVolume, 70);
   } finally {
     await new Promise((done) => server.close(done));
     rmSync(vercelTmp, { recursive: true, force: true });
