@@ -2363,3 +2363,37 @@ html[data-theme='light'] .about-identity-byline strong {
   flex-wrap: wrap;
   gap: 10px;
 }
+.admin-seo-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.seo-check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 13px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.seo-check-row svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.seo-check-row.ok {
+  border: 1px solid rgba(93, 211, 158, 0.25);
+  background: rgba(93, 211, 158, 0.08);
+  color: #b7ebd2;
+}
+.seo-check-row.ok svg {
+  color: #62dc9f;
+}
+.seo-check-row.warn {
+  border: 1px solid rgba(226, 178, 114, 0.35);
+  background: rgba(226, 178, 114, 0.09);
+  color: #ebd0a3;
+}
+.seo-check-row.warn svg {
+  color: #e2b272;
+}

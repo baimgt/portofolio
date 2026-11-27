@@ -135,7 +135,9 @@ test('Vercel serverless handler handles rewritten /api and /uploads routes clean
 
     const llmsRes = await fetch(`${base}/api?__path=/llms.txt`);
     assert.equal(llmsRes.status, 200);
-    assert.match(await llmsRes.text(), /# Ibrahim Abdullah/);
+    const llmsBody = await llmsRes.text();
+    assert.match(llmsBody, /# Portofolio Ibrahim Abdullah — Parepare/);
+    assert.match(llmsBody, /Parepare/);
 
     const sampleTemplate =
       loadHtmlTemplate() ||
@@ -150,10 +152,16 @@ test('Vercel serverless handler handles rewritten /api and /uploads routes clean
       pathname: '/',
     });
     assert.equal(rendered.statusCode, 200);
-    assert.match(rendered.html, /window\.__INITIAL_CONTENT__=/);
-    assert.match(rendered.html, /Kampus Resmi Test/);
-    assert.doesNotMatch(rendered.html, /Universitas Nusantara/);
-    assert.match(rendered.html, /contact@ibrahimabdullah\.biz\.id/);
+    const modScriptIdx = rendered.html.indexOf('<script type="module"');
+    const seoHead = modScriptIdx !== -1 ? rendered.html.slice(0, modScriptIdx) : rendered.html;
+    const seoNoscript = rendered.html.slice(rendered.html.lastIndexOf('<noscript>'));
+    assert.match(seoHead, /window\.__INITIAL_CONTENT__=/);
+    assert.match(seoHead, /Portofolio Ibrahim Abdullah — Full Stack Developer, Parepare/);
+    assert.match(seoHead, /Kampus Resmi Test/);
+    assert.doesNotMatch(seoHead, /Universitas Nusantara/);
+    assert.match(seoNoscript, /Kampus Resmi Test/);
+    assert.doesNotMatch(seoNoscript, /Universitas Nusantara/);
+    assert.match(seoHead, /contact@ibrahimabdullah\.biz\.id/);
 
     const missingRoute = renderDocumentHtml({
       templateHtml: sampleTemplate,

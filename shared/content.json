@@ -4,7 +4,7 @@
     "firstName": "Baim",
     "brand": "Baim",
     "role": "Full Stack Developer",
-    "location": "Indonesia",
+    "location": "Parepare, Indonesia",
     "available": true,
     "portrait": "/images/portrait.webp",
     "portraitHover": "/images/portrait-symbiote.webp",
@@ -324,9 +324,10 @@
     "sfxVolume": 80,
     "siteUrl": "https://ibrahimabdullah.biz.id",
     "seoName": "Ibrahim Abdullah",
+    "seoLocation": "Parepare, Sulawesi Selatan, Indonesia",
     "seoTitle": "",
     "seoDescription": "",
-    "seoKeywords": "Ibrahim Abdullah, ibrahimabdullah.biz.id, Full Stack Developer, Full Stack Web Developer, UI/UX Designer, Portfolio Ibrahim Abdullah",
+    "seoKeywords": "Ibrahim Abdullah, Portofolio Ibrahim Abdullah, Ibrahim Abdullah Parepare, ibrahimabdullah.biz.id, Baim, Full Stack Developer Parepare, Web Developer Indonesia, UI/UX Designer",
     "googleVerification": ""
   }
 }

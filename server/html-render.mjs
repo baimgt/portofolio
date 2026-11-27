@@ -127,10 +127,45 @@ export function buildSitemapXml(content) {
   ].join('\n');
 }
 
+export function resolveLocation(content) {
+  const seoLoc = content?.settings?.seoLocation?.trim();
+  const profLoc = content?.profile?.location?.trim();
+  if (seoLoc && (!profLoc || profLoc.toLowerCase() === 'indonesia')) return seoLoc;
+  if (profLoc && seoLoc && !profLoc.toLowerCase().includes(seoLoc.split(',')[0].trim().toLowerCase())) {
+    return seoLoc;
+  }
+  return profLoc || seoLoc || 'Parepare, Sulawesi Selatan, Indonesia';
+}
+
+function cityOnly(locationText) {
+  return String(locationText || 'Parepare').split(',')[0].trim() || 'Parepare';
+}
+
+function buildLocationPlace(locationText) {
+  const parts = String(locationText || 'Parepare, Sulawesi Selatan, Indonesia')
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const locality = parts[0] || 'Parepare';
+  const region = parts.length >= 3 ? parts[1] : parts.length === 2 && !/^indonesia$/i.test(parts[1]) ? parts[1] : undefined;
+  return {
+    '@type': 'Place',
+    name: locationText || 'Parepare, Sulawesi Selatan, Indonesia',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: locality,
+      ...(region ? { addressRegion: region } : {}),
+      addressCountry: 'ID',
+    },
+  };
+}
+
 export function buildLlmsTxt(content) {
   const origin = normalizeOrigin(content?.settings?.siteUrl);
   const profile = content?.profile || {};
   const personName = content?.settings?.seoName?.trim() || profile.name || 'Ibrahim Abdullah';
+  const locationLabel = resolveLocation(content);
+  const city = cityOnly(locationLabel);
   const socials = [
     profile.github && `- GitHub: ${profile.github}`,
     profile.linkedin && `- LinkedIn: ${profile.linkedin}`,
@@ -141,9 +176,9 @@ export function buildLlmsTxt(content) {
       !/https:\/\/(github\.com|www\.linkedin\.com|www\.instagram\.com)\/?$/.test(line),
   );
   const lines = [
-    `# ${personName}`,
+    `# Portofolio ${personName} — ${city}`,
     '',
-    `> ${profile.role || 'Creative Developer'} berbasis di ${profile.location || 'Indonesia'}. Website portfolio resmi: ${origin}/`,
+    `> ${personName}${profile.firstName && profile.firstName !== personName ? ` (${profile.firstName})` : ''}, ${profile.role || 'Full Stack Developer'} berbasis di ${locationLabel}. Website portofolio resmi: ${origin}/`,
     '',
     '## Ringkasan Profil',
     `- Nama Lengkap: ${personName}`,
@@ -151,10 +186,15 @@ export function buildLlmsTxt(content) {
       ? [`- Nama Panggilan / Brand: ${profile.firstName}`]
       : []),
     `- Profesi: ${profile.role || ''}`,
-    `- Lokasi: ${profile.location || ''}`,
+    `- Domisili / Kota: ${locationLabel}`,
     `- Domain Resmi: ${origin}/`,
     `- Email: ${profile.email || ''}`,
     ...socials,
+    '',
+    '## Tanya-Jawab Singkat (Fakta Resmi)',
+    `- Siapa ${personName} dari ${city}? ${personName} adalah seorang ${profile.role || 'Full Stack Developer'} yang berdomisili di ${locationLabel}. ${profile.intro || ''}`,
+    `- Apa situs web portofolio resmi ${personName}? Website portofolio resmi ${personName} beralamat di ${origin}/.`,
+    `- Bagaimana cara menghubungi ${personName}? Melalui formulir kontak di ${origin}/#contact${profile.email ? ` atau email ${profile.email}` : ''}.`,
     '',
     '## Tentang',
     profile.intro || '',
@@ -196,8 +236,15 @@ function buildLiveHeadAndNoscript({ content, pathname }) {
   const profile = content?.profile || {};
   const settings = content?.settings || {};
   const personName = settings.seoName?.trim() || profile.name || 'Ibrahim Abdullah';
+  const locationLabel = resolveLocation(content);
+  const city = cityOnly(locationLabel);
   const alternateNames = Array.from(
-    new Set([profile.name, profile.firstName, profile.brand]),
+    new Set([
+      profile.name,
+      profile.firstName,
+      profile.brand,
+      city ? `${personName} ${city}` : '',
+    ]),
   ).filter((name) => name && name.trim().toLowerCase() !== personName.toLowerCase());
 
   const cleanPath = (pathname || '/').split('?')[0] || '/';
@@ -239,9 +286,11 @@ function buildLiveHeadAndNoscript({ content, pathname }) {
     description: profile.intro,
     image: absoluteMediaUrl(origin, content?.card?.portrait || profile.portrait),
     email: profile.email ? `mailto:${profile.email}` : undefined,
+    homeLocation: buildLocationPlace(locationLabel),
+    workLocation: buildLocationPlace(locationLabel),
     nationality: {
       '@type': 'Country',
-      name: profile.location || 'Indonesia',
+      name: 'Indonesia',
     },
     ...(validSocialLinks(profile).length ? { sameAs: validSocialLinks(profile) } : {}),
     knowsAbout: Array.from(
@@ -337,12 +386,15 @@ function buildLiveHeadAndNoscript({ content, pathname }) {
     return { statusCode, head, noscript };
   }
 
-  const title = settings.seoTitle?.trim() || `${personName} — ${profile.role || 'Creative Developer'} | ${host}`;
+  const title =
+    settings.seoTitle?.trim() ||
+    `Portofolio ${personName} — ${profile.role || 'Full Stack Developer'}, ${city} | ${host}`;
   const description =
     settings.seoDescription?.trim() ||
-    `${personName}${alternateNames.length ? ` (${alternateNames[0]})` : ''} — ${profile.role || 'Creative Developer'} di ${profile.location || 'Indonesia'}. ${profile.intro || ''}`;
+    `Portofolio resmi ${personName}${alternateNames[0] ? ` (${alternateNames[0]})` : ''}, ${profile.role || 'Full Stack Developer'} berbasis di ${locationLabel}. ${profile.intro || ''}`;
   const keywords =
-    settings.seoKeywords?.trim() || `${personName}, ${host}, ${profile.role || 'Creative Developer'}`;
+    settings.seoKeywords?.trim() ||
+    `${personName}, Portofolio ${personName}, ${personName} ${city}, ${host}, ${profile.role || 'Full Stack Developer'}`;
   const canonical = `${origin}/`;
   const image = absoluteMediaUrl(origin, content?.card?.portrait || profile.portrait);
 
@@ -353,8 +405,8 @@ function buildLiveHeadAndNoscript({ content, pathname }) {
         '@type': 'WebSite',
         '@id': `${origin}/#website`,
         url: canonical,
-        name: personName,
-        alternateName: host,
+        name: `Portofolio ${personName}`,
+        alternateName: [personName, `${personName} ${city}`, host],
         inLanguage: settings.language || 'id',
       },
       personEntity,
@@ -362,7 +414,7 @@ function buildLiveHeadAndNoscript({ content, pathname }) {
         '@type': 'ProfilePage',
         '@id': `${origin}/#profilepage`,
         url: canonical,
-        name: `Portfolio Resmi ${personName}`,
+        name: `Portofolio Resmi ${personName} — ${city}`,
         isPartOf: { '@id': `${origin}/#website` },
         mainEntity: { '@id': `${origin}/#person` },
       },
@@ -431,10 +483,11 @@ function buildLiveHeadAndNoscript({ content, pathname }) {
 
   const noscript = [
     `<main style="max-width:760px;margin:40px auto;padding:24px;font-family:sans-serif;color:#e6eefb;background:#070b12;line-height:1.7">`,
-    `<h1>${escapeHtml(personName)}${alternateNames.length ? ` (${escapeHtml(alternateNames[0])})` : ''} — ${escapeHtml(profile.role || 'Creative Developer')}</h1>`,
+    `<h1>Portofolio ${escapeHtml(personName)}${alternateNames[0] ? ` (${escapeHtml(alternateNames[0])})` : ''} — ${escapeHtml(profile.role || 'Full Stack Developer')}, ${escapeHtml(city)}</h1>`,
+    `<p>${escapeHtml(personName)} adalah seorang ${escapeHtml(profile.role || 'Full Stack Developer')} yang berdomisili di ${escapeHtml(locationLabel)}.</p>`,
     `<p>${escapeHtml(profile.intro || '')}</p>`,
     `<p>${escapeHtml(profile.about || '')} ${escapeHtml(profile.aboutMore || '')}</p>`,
-    `<p>Website resmi: <a href="${escapeHtml(canonical)}">${escapeHtml(canonical)}</a>${profile.email ? ` | Email: ${escapeHtml(profile.email)}` : ''}</p>`,
+    `<p>Website portofolio resmi: <a href="${escapeHtml(canonical)}">${escapeHtml(canonical)}</a>${profile.email ? ` | Email: ${escapeHtml(profile.email)}` : ''}</p>`,
     eduList ? `<h2>Pendidikan</h2><ul>${eduList}</ul>` : '',
     skillList ? `<h2>Keahlian &amp; Layanan</h2><ul>${skillList}</ul>` : '',
     projectList ? `<h2>Project Pilihan</h2><ul>${projectList}</ul>` : '',

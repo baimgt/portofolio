@@ -277,7 +277,8 @@ test('Portfolio API: authentication, persistence, project CRUD, uploads, and inb
       const llms = await fetch(`${base}/llms.txt`);
       assert.equal(llms.status, 200);
       const llmsText = await llms.text();
-      assert.match(llmsText, /# Ibrahim Abdullah/);
+      assert.match(llmsText, /# Portofolio Ibrahim Abdullah — Parepare/);
+      assert.match(llmsText, /Parepare/);
       assert.match(llmsText, /https:\/\/ibrahimabdullah\.biz\.id\//);
     });
     await t.test('Contact messages are stored, readable, markable, and deletable', async () => {

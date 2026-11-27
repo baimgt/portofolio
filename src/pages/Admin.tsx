@@ -1295,6 +1295,7 @@ export default function Admin({
                 <SeoEditor
                   value={draft.settings}
                   profile={draft.profile}
+                  content={draft}
                   onChange={(value) => updateSection('settings', value)}
                 />
               )}

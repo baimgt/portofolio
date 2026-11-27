@@ -353,6 +353,10 @@ export async function createExpressApp({
     const siteUrl =
       settings?.siteUrl ?? current.settings?.siteUrl ?? 'https://ibrahimabdullah.biz.id';
     const seoName = settings?.seoName ?? current.settings?.seoName ?? 'Ibrahim Abdullah';
+    const seoLocation =
+      settings?.seoLocation ??
+      current.settings?.seoLocation ??
+      'Parepare, Sulawesi Selatan, Indonesia';
     const seoTitle = settings?.seoTitle ?? current.settings?.seoTitle ?? '';
     const seoDescription = settings?.seoDescription ?? current.settings?.seoDescription ?? '';
     const seoKeywords = settings?.seoKeywords ?? current.settings?.seoKeywords ?? '';
@@ -368,6 +372,7 @@ export async function createExpressApp({
       !volumeValid(sfxVolume) ||
       !safeSiteUrl(siteUrl) ||
       !text(seoName, 120) ||
+      !text(seoLocation, 160) ||
       !text(seoTitle, 200) ||
       !text(seoDescription, 500) ||
       !text(seoKeywords, 500) ||
@@ -430,6 +435,7 @@ export async function createExpressApp({
           sfxVolume: Math.round(sfxVolume),
           siteUrl: siteUrl.trim().replace(/\/+$/, ''),
           seoName: seoName.trim(),
+          seoLocation: seoLocation.trim(),
           seoTitle: seoTitle.trim(),
           seoDescription: seoDescription.trim(),
           seoKeywords: seoKeywords.trim(),

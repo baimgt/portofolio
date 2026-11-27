@@ -112,6 +112,7 @@ export interface AppSettings {
   sfxVolume?: number;
   siteUrl?: string;
   seoName?: string;
+  seoLocation?: string;
   seoTitle?: string;
   seoDescription?: string;
   seoKeywords?: string;

@@ -52,7 +52,7 @@ function absoluteMediaUrl(origin: string, url?: string): string {
   return `${origin}${url.startsWith('/') ? url : `/${url}`}`;
 }
 
-function validSocialLinks(content: Content): string[] {
+export function validSocialLinks(content: Content): string[] {
   return [content.profile.github, content.profile.instagram, content.profile.linkedin].filter(
     (url) =>
       typeof url === 'string' &&
@@ -63,6 +63,44 @@ function validSocialLinks(content: Content): string[] {
 
 export function resolvePublicPersonName(content: Content): string {
   return content.settings?.seoName?.trim() || content.profile.name;
+}
+
+export function resolvePublicLocation(content: Content): string {
+  const seoLoc = content.settings?.seoLocation?.trim();
+  const profLoc = content.profile.location?.trim();
+  if (seoLoc && (!profLoc || profLoc.toLowerCase() === 'indonesia')) return seoLoc;
+  if (profLoc && seoLoc && !profLoc.toLowerCase().includes(seoLoc.split(',')[0].trim().toLowerCase())) {
+    return seoLoc;
+  }
+  return profLoc || seoLoc || 'Parepare, Sulawesi Selatan, Indonesia';
+}
+
+export function resolvePublicCity(content: Content): string {
+  return resolvePublicLocation(content).split(',')[0].trim() || 'Parepare';
+}
+
+function buildLocationPlace(locationText: string) {
+  const parts = locationText
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const locality = parts[0] || 'Parepare';
+  const region =
+    parts.length >= 3
+      ? parts[1]
+      : parts.length === 2 && !/^indonesia$/i.test(parts[1])
+        ? parts[1]
+        : undefined;
+  return {
+    '@type': 'Place',
+    name: locationText,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: locality,
+      ...(region ? { addressRegion: region } : {}),
+      addressCountry: 'ID',
+    },
+  };
 }
 
 export function syncSeoMetadata({
@@ -80,6 +118,8 @@ export function syncSeoMetadata({
   const origin = normalizeOrigin(content.settings?.siteUrl);
   const host = origin.replace(/^https?:\/\//, '');
   const personName = resolvePublicPersonName(content);
+  const locationLabel = resolvePublicLocation(content);
+  const city = resolvePublicCity(content);
 
   if (isAdmin) {
     document.title = `${content.profile.brand}. / Studio`;
@@ -90,7 +130,12 @@ export function syncSeoMetadata({
   }
 
   const alternateNames = Array.from(
-    new Set([content.profile.name, content.profile.firstName, content.profile.brand]),
+    new Set([
+      content.profile.name,
+      content.profile.firstName,
+      content.profile.brand,
+      city ? `${personName} ${city}` : '',
+    ]),
   ).filter((name) => name && name.trim().toLowerCase() !== personName.toLowerCase());
 
   const googleToken = content.settings?.googleVerification?.trim();
@@ -115,11 +160,13 @@ export function syncSeoMetadata({
     mainEntityOfPage: `${origin}/#profilepage`,
     jobTitle: content.profile.role,
     description: content.profile.intro,
-    image: absoluteMediaUrl(origin, content.profile.portrait),
+    image: absoluteMediaUrl(origin, content.card?.portrait || content.profile.portrait),
     email: content.profile.email ? `mailto:${content.profile.email}` : undefined,
+    homeLocation: buildLocationPlace(locationLabel),
+    workLocation: buildLocationPlace(locationLabel),
     nationality: {
       '@type': 'Country',
-      name: content.profile.location || 'Indonesia',
+      name: 'Indonesia',
     },
     ...(validSocialLinks(content).length ? { sameAs: validSocialLinks(content) } : {}),
     knowsAbout: Array.from(
@@ -138,13 +185,15 @@ export function syncSeoMetadata({
 
   if (route === '/') {
     const title =
-      content.settings?.seoTitle?.trim() || `${personName} — ${content.profile.role} | ${host}`;
+      content.settings?.seoTitle?.trim() ||
+      `Portofolio ${personName} — ${content.profile.role}, ${city} | ${host}`;
     const description =
       content.settings?.seoDescription?.trim() ||
-      `${personName}${alternateNames.length ? ` (${alternateNames[0]})` : ''} — ${content.profile.role} di ${content.profile.location}. ${content.profile.intro}`;
+      `Portofolio resmi ${personName}${alternateNames[0] ? ` (${alternateNames[0]})` : ''}, ${content.profile.role} berbasis di ${locationLabel}. ${content.profile.intro}`;
     const keywords =
-      content.settings?.seoKeywords?.trim() || `${personName}, ${host}, ${content.profile.role}`;
-    const image = absoluteMediaUrl(origin, content.profile.portrait);
+      content.settings?.seoKeywords?.trim() ||
+      `${personName}, Portofolio ${personName}, ${personName} ${city}, ${host}, ${content.profile.role}`;
+    const image = absoluteMediaUrl(origin, content.card?.portrait || content.profile.portrait);
     const canonical = `${origin}/`;
 
     document.title = title;
@@ -156,7 +205,10 @@ export function syncSeoMetadata({
     upsertLink('canonical', canonical);
 
     upsertMeta('meta[property="og:type"]', { property: 'og:type', content: 'profile' });
-    upsertMeta('meta[property="og:site_name"]', { property: 'og:site_name', content: personName });
+    upsertMeta('meta[property="og:site_name"]', {
+      property: 'og:site_name',
+      content: `Portofolio ${personName}`,
+    });
     upsertMeta('meta[property="og:title"]', { property: 'og:title', content: title });
     upsertMeta('meta[property="og:description"]', {
       property: 'og:description',
@@ -183,8 +235,8 @@ export function syncSeoMetadata({
           '@type': 'WebSite',
           '@id': `${origin}/#website`,
           url: canonical,
-          name: personName,
-          alternateName: host,
+          name: `Portofolio ${personName}`,
+          alternateName: [personName, `${personName} ${city}`, host],
           inLanguage: content.settings?.language || 'id',
         },
         personEntity,
@@ -192,7 +244,7 @@ export function syncSeoMetadata({
           '@type': 'ProfilePage',
           '@id': `${origin}/#profilepage`,
           url: canonical,
-          name: `Portfolio Resmi ${personName}`,
+          name: `Portofolio Resmi ${personName} — ${city}`,
           isPartOf: { '@id': `${origin}/#website` },
           mainEntity: { '@id': `${origin}/#person` },
         },

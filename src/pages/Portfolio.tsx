@@ -33,7 +33,7 @@ import MorphPortrait from '../components/MorphPortrait';
 import Signature from '../components/Signature';
 import { EducationSection, FrameworksSection } from '../components/Journey';
 import { api } from '../lib/api';
-import { resolvePublicPersonName } from '../lib/seo';
+import { resolvePublicCity, resolvePublicLocation, resolvePublicPersonName } from '../lib/seo';
 import type { Content, Navigate, Project } from '../types';
 
 export function ProjectCard({
@@ -416,6 +416,8 @@ export default function Portfolio({
   usePortfolioMotion(ref, entranceDelay);
   const { profile, pages } = content;
   const publicName = resolvePublicPersonName(content);
+  const publicLocation = resolvePublicLocation(content);
+  const publicCity = resolvePublicCity(content);
   const hasFullNameByline =
     !!publicName && !profile.name.toLowerCase().includes(publicName.toLowerCase());
   return (
@@ -508,7 +510,7 @@ export default function Portfolio({
               <ArrowDown size={14} />
             </a>
             <span className="hero-location">
-              {content.copy.heroLocationLabel} {profile.location.toUpperCase()}.
+              {content.copy.heroLocationLabel} {publicLocation.toUpperCase()}.
             </span>
           </div>
         </section>
@@ -545,11 +547,11 @@ export default function Portfolio({
                 <span className="portrait-corner br" />
               </div>
               <div className="about-description">
-                {hasFullNameByline && (
-                  <p className="about-identity-byline" data-reveal>
-                    <strong>{publicName}</strong> ({profile.name}) — {profile.role}, {profile.location}.
-                  </p>
-                )}
+                <p className="about-identity-byline" data-reveal>
+                  Portofolio resmi <strong>{publicName}</strong>
+                  {hasFullNameByline ? ` (${profile.name})` : ''} — {profile.role} di{' '}
+                  {publicLocation} ({publicCity}).
+                </p>
                 <p data-reveal>{profile.about}</p>
                 <p data-reveal>{profile.aboutMore}</p>
                 <div className="about-signature" data-reveal>

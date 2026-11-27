@@ -3,12 +3,13 @@ import { ArrowUp, ArrowUpRight } from 'lucide-react';
 import Signature from './Signature';
 import { Github, Instagram, Linkedin } from './BrandIcons';
 import { smoothScrollTo } from './Motion';
-import { resolvePublicPersonName } from '../lib/seo';
+import { resolvePublicCity, resolvePublicPersonName } from '../lib/seo';
 import type { Content, Navigate } from '../types';
 
 export default function Footer({ content, navigate }: { content: Content; navigate: Navigate }) {
   const { profile, pages } = content;
   const publicName = resolvePublicPersonName(content);
+  const publicCity = resolvePublicCity(content);
   const copyrightName =
     publicName && !profile.name.toLowerCase().includes(publicName.toLowerCase())
       ? `${publicName} (${profile.name})`
@@ -74,7 +75,7 @@ export default function Footer({ content, navigate }: { content: Content; naviga
         </div>
         <div className="footer-bottom">
           <span>
-            &copy; {new Date().getFullYear()} {copyrightName}
+            &copy; {new Date().getFullYear()} Portofolio {copyrightName} · {publicCity}
           </span>
           <span>{content.copy.footerCredit}</span>
           <a
