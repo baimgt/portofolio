@@ -112,7 +112,7 @@ export function SeoEditor({
               <input
                 value={seoKeywords}
                 maxLength={500}
-                placeholder="Ibrahim Abdullah, ibrahimabdullah.biz.id, Creative Developer, Web Developer"
+                placeholder="Ibrahim Abdullah, ibrahimabdullah.biz.id, Full Stack Developer, Web Developer"
                 onChange={(event) => onChange({ ...value, seoKeywords: event.target.value })}
               />
             </Field>

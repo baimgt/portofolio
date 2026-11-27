@@ -5,7 +5,17 @@ import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import multer from 'multer';
 import { randomBytes, randomUUID } from 'node:crypto';
+import { extname } from 'node:path';
 import { verifyPassword, hashPassword } from './crypto.mjs';
+import {
+  buildLlmsTxt,
+  buildRobotsTxt,
+  buildSitemapXml,
+  loadHtmlTemplate,
+  renderDocumentHtml,
+  safeSiteUrl,
+  verificationValid,
+} from './html-render.mjs';
 
 const require = createRequire(import.meta.url);
 const languagesList = require('../shared/languages.json');
@@ -23,22 +33,6 @@ const safeAudioUrl = (value) =>
     /^\/(audio|uploads)\/[a-zA-Z0-9._/-]+$/.test(value));
 const volumeValid = (value) =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100;
-const safeSiteUrl = (value) =>
-  text(value, 300) &&
-  (value === '' || /^https:\/\/[a-zA-Z0-9.-]+(?::[0-9]+)?\/?$/.test(value.trim()));
-const verificationValid = (value) =>
-  text(value, 200) && /^[a-zA-Z0-9._-]*$/.test(value.trim());
-const normalizeOrigin = (value) => {
-  const cleaned = typeof value === 'string' ? value.trim().replace(/\/+$/, '') : '';
-  return cleaned || 'https://ibrahimabdullah.biz.id';
-};
-const escapeXml = (str) =>
-  String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
 const stringList = (value, max = 30) =>
   Array.isArray(value) && value.length <= max && value.every((item) => text(item, 150));
 const projectValid = (p) =>
@@ -189,6 +183,7 @@ export async function createExpressApp({
   production = process.env.NODE_ENV === 'production',
   maxUploadBytes = 5 * 1024 * 1024,
   maxAudioBytes = 4 * 1024 * 1024,
+  ssrHtml = false,
 }) {
   const app = express();
   app.disable('x-powered-by');
@@ -590,125 +585,23 @@ export async function createExpressApp({
 
   app.get('/robots.txt', async (_req, res) => {
     const content = await storage.getContent();
-    const origin = normalizeOrigin(content.settings?.siteUrl);
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=300');
-    res.send(
-      [
-        'User-agent: *',
-        'Allow: /',
-        'Disallow: /admin',
-        'Disallow: /api/',
-        '',
-        'User-agent: Googlebot',
-        'Allow: /',
-        'Disallow: /admin',
-        'Disallow: /api/',
-        '',
-        'User-agent: Google-Extended',
-        'Allow: /',
-        'Disallow: /admin',
-        '',
-        'User-agent: OAI-SearchBot',
-        'Allow: /',
-        'Disallow: /admin',
-        '',
-        'User-agent: GPTBot',
-        'Allow: /',
-        'Disallow: /admin',
-        '',
-        'User-agent: PerplexityBot',
-        'Allow: /',
-        'Disallow: /admin',
-        '',
-        'User-agent: ClaudeBot',
-        'Allow: /',
-        'Disallow: /admin',
-        '',
-        `Sitemap: ${origin}/sitemap.xml`,
-      ].join('\n'),
-    );
+    res.send(buildRobotsTxt(content));
   });
 
   app.get('/sitemap.xml', async (_req, res) => {
     const content = await storage.getContent();
-    const origin = normalizeOrigin(content.settings?.siteUrl);
-    const today = new Date().toISOString().slice(0, 10);
-    const entries = [
-      { loc: `${origin}/`, changefreq: 'weekly', priority: '1.0' },
-      ...(content.projects || []).map((project) => ({
-        loc: `${origin}/projects/${project.slug}`,
-        changefreq: 'monthly',
-        priority: '0.8',
-      })),
-    ];
-    const xml = [
-      '<?xml version="1.0" encoding="UTF-8"?>',
-      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-      ...entries.map(
-        (entry) =>
-          `  <url>\n    <loc>${escapeXml(entry.loc)}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${entry.changefreq}</changefreq>\n    <priority>${entry.priority}</priority>\n  </url>`,
-      ),
-      '</urlset>',
-    ].join('\n');
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=300');
-    res.send(xml);
+    res.send(buildSitemapXml(content));
   });
 
   app.get('/llms.txt', async (_req, res) => {
     const content = await storage.getContent();
-    const origin = normalizeOrigin(content.settings?.siteUrl);
-    const personName = content.settings?.seoName?.trim() || content.profile.name;
-    const socials = [
-      content.profile.github && `- GitHub: ${content.profile.github}`,
-      content.profile.linkedin && `- LinkedIn: ${content.profile.linkedin}`,
-      content.profile.instagram && `- Instagram: ${content.profile.instagram}`,
-    ]
-      .filter((line) => line && !/https:\/\/(github\.com|www\.linkedin\.com|www\.instagram\.com)\/?$/.test(line))
-      .join('\n');
-    const lines = [
-      `# ${personName}`,
-      '',
-      `> ${content.profile.role} berbasis di ${content.profile.location}. Website portfolio resmi: ${origin}/`,
-      '',
-      '## Ringkasan Profil',
-      `- Nama Lengkap: ${personName}`,
-      ...(content.profile.firstName && content.profile.firstName !== personName
-        ? [`- Nama Panggilan / Brand: ${content.profile.firstName}`]
-        : []),
-      `- Profesi: ${content.profile.role}`,
-      `- Lokasi: ${content.profile.location}`,
-      `- Domain Resmi: ${origin}/`,
-      `- Email: ${content.profile.email}`,
-      ...(socials ? [socials] : []),
-      '',
-      '## Tentang',
-      content.profile.intro,
-      content.profile.about,
-      content.profile.aboutMore,
-      '',
-      '## Layanan & Keahlian',
-      ...(content.skills || []).map(
-        (s) => `- **${s.title}**: ${s.description} (${(s.tools || []).join(', ')})`,
-      ),
-      '',
-      '## Teknologi Utama',
-      ...(content.frameworks || []).map((f) => `- **${f.name}** (${f.category}): ${f.description}`),
-      '',
-      '## Pendidikan',
-      ...(content.education || []).map(
-        (e) => `- **${e.school}** (${e.period}) — ${e.degree}, ${e.location}`,
-      ),
-      '',
-      '## Karya & Project Pilihan',
-      ...(content.projects || []).map(
-        (p) => `- [${p.title}](${origin}/projects/${p.slug}) (${p.category}, ${p.year}): ${p.summary}`,
-      ),
-    ];
     res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=300');
-    res.send(lines.filter((line) => line !== undefined).join('\n'));
+    res.send(buildLlmsTxt(content));
   });
 
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Endpoint tidak ditemukan.' }));
@@ -762,6 +655,27 @@ export async function createExpressApp({
       }
       res.setHeader('Content-Length', String(total));
       return res.send(file.buffer);
+    });
+  }
+
+  if (ssrHtml) {
+    app.get(/.*/, async (req, res, next) => {
+      const ext = extname(req.path || '');
+      if (ext && ext !== '.html') {
+        return res.status(404).end();
+      }
+      const templateHtml = loadHtmlTemplate();
+      if (!templateHtml) return next();
+      const content = await storage.getContent();
+      const { statusCode, html } = renderDocumentHtml({
+        templateHtml,
+        content,
+        pathname: req.path || '/',
+      });
+      res.status(statusCode);
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store, must-revalidate');
+      return res.send(html);
     });
   }
 

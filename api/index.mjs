@@ -11,6 +11,7 @@ async function getApp() {
         storage,
         production: true,
         maxUploadBytes: 4 * 1024 * 1024,
+        ssrHtml: true,
       });
       attachApiErrorHandler(app);
       return app;

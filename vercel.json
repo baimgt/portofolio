@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run build:vercel",
   "outputDirectory": "dist",
   "functions": {
     "api/index.mjs": {
@@ -29,8 +29,12 @@
       "destination": "/api?__path=/uploads/$1"
     },
     {
+      "source": "/",
+      "destination": "/api?__path=/"
+    },
+    {
       "source": "/((?!api$|api/|uploads/|images/|audio/|assets/|robots\\.txt|sitemap\\.xml|llms\\.txt|favicon\\.svg).*)",
-      "destination": "/index.html"
+      "destination": "/api?__path=/$1"
     }
   ]
 }

@@ -14,8 +14,16 @@ import ProjectDetail from './pages/ProjectDetail';
 
 const Admin = lazy(() => import('./pages/Admin'));
 
+declare global {
+  interface Window {
+    __INITIAL_CONTENT__?: Content;
+  }
+}
+
 export default function App() {
-  const [content, setContent] = useState<Content>(seed as Content);
+  const bootContent = typeof window !== 'undefined' ? window.__INITIAL_CONTENT__ : undefined;
+  const [content, setContent] = useState<Content>(bootContent ?? (seed as Content));
+  const [contentReady, setContentReady] = useState(Boolean(bootContent));
   const [route, setRoute] = useState(window.location.pathname);
   const [loading, setLoading] = useState(!window.location.pathname.startsWith('/admin'));
   const overlay = useRef<HTMLDivElement>(null);
@@ -33,6 +41,8 @@ export default function App() {
         'Content synchronization unavailable:',
         error instanceof Error ? error.message : error,
       );
+    } finally {
+      setContentReady(true);
     }
   }, []);
   useEffect(() => {
@@ -149,7 +159,7 @@ export default function App() {
           >
             <Admin content={content} onContentChange={setContent} navigate={navigate} />
           </Suspense>
-        ) : route === '/' ? (
+        ) : !contentReady ? null : route === '/' ? (
           <Portfolio content={content} navigate={navigate} entranceDelay={entranceDelay.current} />
         ) : project ? (
           <ProjectDetail key={project.id} project={project} content={content} navigate={navigate} />
@@ -179,6 +189,7 @@ export default function App() {
         <PageLoader
           brand={content.profile.brand}
           caption={content.copy.loadingCaption}
+          ready={contentReady}
           onComplete={() => setLoading(false)}
         />
       )}

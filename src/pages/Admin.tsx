@@ -403,6 +403,7 @@ export default function Admin({
   const [tab, setTab] = useState<Tab>('overview');
   const [draft, setDraft] = useState<Content>(clone(content));
   const [dirty, setDirty] = useState(false);
+  const [syncCardPhoto, setSyncCardPhoto] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
@@ -487,7 +488,20 @@ export default function Admin({
         .catch((error) => setError(errorText(error)));
   }, [auth, tab]);
   const updateProfile = <K extends keyof Profile>(key: K, value: Profile[K]) => {
-    setDraft((current) => ({ ...current, profile: { ...current.profile, [key]: value } }));
+    setDraft((current) => {
+      const nextCard = { ...current.card };
+      if (syncCardPhoto && key === 'portrait') {
+        nextCard.portrait = '';
+      }
+      if (syncCardPhoto && key === 'portraitHover') {
+        nextCard.portraitHover = '';
+      }
+      return {
+        ...current,
+        profile: { ...current.profile, [key]: value },
+        card: nextCard,
+      };
+    });
     setDirty(true);
   };
   const updateSection = <K extends keyof Content>(key: K, value: Content[K]) => {
@@ -1062,6 +1076,38 @@ export default function Admin({
                     label="Foto Black Suit profil"
                     onError={setError}
                   />
+                  <label className="admin-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={syncCardPhoto}
+                      onChange={(event) => setSyncCardPhoto(event.target.checked)}
+                    />
+                    Ikut perbarui foto kartu lanyard di beranda saat mengubah foto profil
+                  </label>
+                  {((draft.card.portrait && draft.card.portrait !== draft.profile.portrait) ||
+                    (draft.card.portraitHover &&
+                      draft.card.portraitHover !== draft.profile.portraitHover)) && (
+                    <div className="admin-vercel-note" role="note">
+                      <CircleHelp size={16} />
+                      <span>
+                        Kartu lanyard di beranda saat ini memakai foto khusus dari tab{' '}
+                        <strong>Kartu identitas</strong>.{' '}
+                        <button
+                          type="button"
+                          className="text-button"
+                          onClick={() => {
+                            setDraft((current) => ({
+                              ...current,
+                              card: { ...current.card, portrait: '', portraitHover: '' },
+                            }));
+                            setDirty(true);
+                          }}
+                        >
+                          Samakan dengan foto profil ini
+                        </button>
+                      </span>
+                    </div>
+                  )}
                   <Field
                     label="URL foto Black Suit profil"
                     hint="Gunakan gambar dengan pose dan crop identik dengan foto profil."

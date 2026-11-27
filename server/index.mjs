@@ -4,6 +4,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createServer as createHttpServer } from 'node:http';
 import { openDatabase } from './database.mjs';
 import { createExpressApp, attachApiErrorHandler } from './app.mjs';
+import { loadHtmlTemplate, renderDocumentHtml } from './html-render.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -26,8 +27,23 @@ export async function createApplication({
     });
     app.use(vite.middlewares);
   } else if (frontend) {
-    app.use(express.static(join(root, 'dist'), { maxAge: '1h' }));
-    app.get(/.*/, (_req, res) => res.sendFile(join(root, 'dist', 'index.html')));
+    app.use(express.static(join(root, 'dist'), { maxAge: '1h', index: false }));
+    app.get(/.*/, async (req, res) => {
+      const templateHtml = loadHtmlTemplate();
+      if (!templateHtml) {
+        return res.sendFile(join(root, 'dist', 'index.html'));
+      }
+      const content = await storage.getContent();
+      const { statusCode, html } = renderDocumentHtml({
+        templateHtml,
+        content,
+        pathname: req.path || '/',
+      });
+      res.status(statusCode);
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store, must-revalidate');
+      return res.send(html);
+    });
   }
 
   attachApiErrorHandler(app);

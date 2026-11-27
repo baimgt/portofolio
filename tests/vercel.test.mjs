@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import handler from '../api/index.mjs';
+import { renderDocumentHtml, loadHtmlTemplate } from '../server/html-render.mjs';
 
 test('Vercel serverless handler handles rewritten /api and /uploads routes cleanly', async () => {
   const vercelTmp = join(tmpdir(), 'portfolio-vercel');
@@ -135,6 +136,42 @@ test('Vercel serverless handler handles rewritten /api and /uploads routes clean
     const llmsRes = await fetch(`${base}/api?__path=/llms.txt`);
     assert.equal(llmsRes.status, 200);
     assert.match(await llmsRes.text(), /# Ibrahim Abdullah/);
+
+    const sampleTemplate =
+      loadHtmlTemplate() ||
+      '<!doctype html><html><head><meta name="seo-head-start" content="1" /><title>Old</title><meta name="seo-head-end" content="1" /></head><body><div id="root"></div><noscript>Old</noscript></body></html>';
+    const customContent = structuredClone(savedAudio.body);
+    customContent.profile.name = 'Ibrahim Abdullah';
+    customContent.profile.email = 'contact@ibrahimabdullah.biz.id';
+    customContent.education[0].school = 'Kampus Resmi Test';
+    const rendered = renderDocumentHtml({
+      templateHtml: sampleTemplate,
+      content: customContent,
+      pathname: '/',
+    });
+    assert.equal(rendered.statusCode, 200);
+    assert.match(rendered.html, /window\.__INITIAL_CONTENT__=/);
+    assert.match(rendered.html, /Kampus Resmi Test/);
+    assert.doesNotMatch(rendered.html, /Universitas Nusantara/);
+    assert.match(rendered.html, /contact@ibrahimabdullah\.biz\.id/);
+
+    const missingRoute = renderDocumentHtml({
+      templateHtml: sampleTemplate,
+      content: customContent,
+      pathname: '/tidak-ada',
+    });
+    assert.equal(missingRoute.statusCode, 404);
+    assert.match(missingRoute.html, /noindex, follow/);
+
+    if (loadHtmlTemplate()) {
+      const ssrHome = await fetch(`${base}/api?__path=/`);
+      assert.equal(ssrHome.status, 200);
+      assert.match(ssrHome.headers.get('content-type') || '', /text\/html/);
+      assert.match(ssrHome.headers.get('cache-control') || '', /no-store/);
+      const ssrHtml = await ssrHome.text();
+      assert.match(ssrHtml, /window\.__INITIAL_CONTENT__=/);
+      assert.match(ssrHtml, /Vercel Test User/);
+    }
   } finally {
     await new Promise((done) => server.close(done));
     rmSync(vercelTmp, { recursive: true, force: true });

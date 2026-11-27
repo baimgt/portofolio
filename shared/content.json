@@ -3,13 +3,13 @@
     "name": "Baim",
     "firstName": "Baim",
     "brand": "Baim",
-    "role": "Creative Developer",
+    "role": "Full Stack Developer",
     "location": "Indonesia",
     "available": true,
     "portrait": "/images/portrait.webp",
     "portraitHover": "/images/portrait-symbiote.webp",
     "intro": "Memadukan desain, kode, dan sedikit rasa penasaran untuk menciptakan pengalaman digital yang berkesan.",
-    "about": "Saya creative developer yang percaya bahwa website yang baik bukan hanya tentang bagaimana ia terlihat, tapi juga bagaimana ia terasa. Saya merangkai desain yang thoughtful dengan teknologi web modern.",
+    "about": "Saya Full Stack Developer yang percaya bahwa website yang baik bukan hanya tentang bagaimana ia terlihat, tapi juga bagaimana ia terasa. Saya merangkai desain yang thoughtful dengan teknologi web modern.",
     "aboutMore": "Dari ide pertama sampai interaksi terkecil, saya menikmati setiap proses mengubah hal yang kompleks menjadi pengalaman yang sederhana, intuitif, dan punya karakter.",
     "email": "hello@Baim.dev",
     "github": "https://github.com/",
@@ -123,8 +123,8 @@
   "education": [
     {
       "id": "university",
-      "school": "Universitas Nusantara",
-      "degree": "S1 Teknik Informatika",
+      "school": "institut teknologi bacharuddin jusuf habibie",
+      "degree": "S1 Sistem Informasi",
       "period": "2021 - 2025",
       "location": "Indonesia",
       "description": "Mendalami rekayasa perangkat lunak, interaksi manusia dan komputer, serta merangkai ide menjadi produk digital.",
@@ -326,7 +326,7 @@
     "seoName": "Ibrahim Abdullah",
     "seoTitle": "",
     "seoDescription": "",
-    "seoKeywords": "Ibrahim Abdullah, ibrahimabdullah.biz.id, Creative Developer, Full Stack Web Developer, UI/UX Designer, Portfolio Ibrahim Abdullah",
+    "seoKeywords": "Ibrahim Abdullah, ibrahimabdullah.biz.id, Full Stack Developer, Full Stack Web Developer, UI/UX Designer, Portfolio Ibrahim Abdullah",
     "googleVerification": ""
   }
 }

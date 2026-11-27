@@ -86,6 +86,15 @@ export function CardEditor({
                 onChange={(event) => update('portrait', event.target.value)}
               />
             </Field>
+            {value.portrait && (
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => update('portrait', '')}
+              >
+                Ikuti foto profil (hapus foto khusus kartu)
+              </button>
+            )}
             <ImageField
               value={value.portraitHover || profile.portraitHover}
               onChange={(url) => update('portraitHover', url)}
@@ -101,6 +110,15 @@ export function CardEditor({
                 onChange={(event) => update('portraitHover', event.target.value)}
               />
             </Field>
+            {value.portraitHover && (
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => update('portraitHover', '')}
+              >
+                Ikuti foto Black Suit profil
+              </button>
+            )}
           </div>
           <div className="admin-editor-section">
             <h3>Tanda tangan & logo</h3>

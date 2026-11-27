@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type ReactNode, type RefObject, type PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject, type PointerEvent } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
@@ -445,38 +445,57 @@ export function ProjectCursor({ label = 'VIEW PROJECT' }: { label?: string }) {
 export function PageLoader({
   brand,
   caption,
+  ready = true,
   onComplete,
 }: {
   brand: string;
   caption?: string;
+  ready?: boolean;
   onComplete: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const callback = useRef(onComplete);
   callback.current = onComplete;
+  const [introDone, setIntroDone] = useState(false);
+  const exitStarted = useRef(false);
+
   useLayoutEffect(() => {
     if (reducedMotion()) {
-      callback.current();
+      setIntroDone(true);
       return;
     }
     const context = gsap.context(() => {
       gsap
-        .timeline({ onComplete: () => callback.current() })
+        .timeline({ onComplete: () => setIntroDone(true) })
         .from('.loader-brand', { opacity: 0, y: 15, duration: 0.35, ease: 'power3.out' })
         .fromTo(
           '.loader-progress span',
           { scaleX: 0 },
           { scaleX: 1, duration: 0.6, ease: 'power2.inOut' },
           0.1,
-        )
-        .to(
-          ref.current,
-          { clipPath: 'inset(0 0 100% 0)', duration: 0.8, ease: 'power4.inOut' },
-          0.65,
         );
     }, ref);
     return () => context.revert();
   }, []);
+
+  useEffect(() => {
+    if (!introDone || !ready || exitStarted.current) return;
+    exitStarted.current = true;
+    if (reducedMotion() || !ref.current) {
+      callback.current();
+      return;
+    }
+    const tween = gsap.to(ref.current, {
+      clipPath: 'inset(0 0 100% 0)',
+      duration: 0.8,
+      ease: 'power4.inOut',
+      onComplete: () => callback.current(),
+    });
+    return () => {
+      tween.kill();
+    };
+  }, [introDone, ready]);
+
   return (
     <div className="page-loader" ref={ref} aria-label="Memuat portfolio">
       <div className="loader-brand">
