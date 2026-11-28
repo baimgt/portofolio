@@ -81,6 +81,11 @@ export function buildRobotsTxt(content) {
     'Disallow: /admin',
     'Disallow: /api/',
     '',
+    'User-agent: Googlebot-Image',
+    'Allow: /uploads/',
+    'Allow: /images/',
+    'Disallow: /admin',
+    '',
     'User-agent: Google-Extended',
     'Allow: /',
     'Disallow: /admin',
@@ -107,22 +112,36 @@ export function buildRobotsTxt(content) {
 
 export function buildSitemapXml(content) {
   const origin = normalizeOrigin(content?.settings?.siteUrl);
+  const profile = content?.profile || {};
+  const personName = content?.settings?.seoName?.trim() || profile.name || 'Ibrahim Abdullah';
+  const city = cityOnly(resolveLocation(content));
   const today = new Date().toISOString().slice(0, 10);
+  const primaryImage = absoluteMediaUrl(origin, content?.card?.portrait || profile.portrait);
   const entries = [
-    { loc: `${origin}/`, changefreq: 'weekly', priority: '1.0' },
+    {
+      loc: `${origin}/`,
+      changefreq: 'weekly',
+      priority: '1.0',
+      image: primaryImage,
+      imageTitle: `Portofolio ${personName} — ${profile.role || 'Full Stack Developer'}, ${city}`,
+    },
     ...(content?.projects || []).map((project) => ({
       loc: `${origin}/projects/${project.slug}`,
       changefreq: 'monthly',
       priority: '0.8',
+      image: project.image ? absoluteMediaUrl(origin, project.image) : '',
+      imageTitle: `${project.title} — ${personName}`,
     })),
   ];
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    ...entries.map(
-      (entry) =>
-        `  <url>\n    <loc>${escapeXml(entry.loc)}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${entry.changefreq}</changefreq>\n    <priority>${entry.priority}</priority>\n  </url>`,
-    ),
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">',
+    ...entries.map((entry) => {
+      const imageBlock = entry.image
+        ? `\n    <image:image>\n      <image:loc>${escapeXml(entry.image)}</image:loc>\n      <image:title>${escapeXml(entry.imageTitle)}</image:title>\n    </image:image>`
+        : '';
+      return `  <url>\n    <loc>${escapeXml(entry.loc)}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${entry.changefreq}</changefreq>\n    <priority>${entry.priority}</priority>${imageBlock}\n  </url>`;
+    }),
     '</urlset>',
   ].join('\n');
 }
@@ -392,9 +411,17 @@ function buildLiveHeadAndNoscript({ content, pathname }) {
   const description =
     settings.seoDescription?.trim() ||
     `Portofolio resmi ${personName}${alternateNames[0] ? ` (${alternateNames[0]})` : ''}, ${profile.role || 'Full Stack Developer'} berbasis di ${locationLabel}. ${profile.intro || ''}`;
-  const keywords =
-    settings.seoKeywords?.trim() ||
-    `${personName}, Portofolio ${personName}, ${personName} ${city}, ${host}, ${profile.role || 'Full Stack Developer'}`;
+  const rawKeywords = settings.seoKeywords?.trim() || '';
+  const extraTokens = [
+    personName,
+    `Portofolio ${personName}`,
+    `${personName} ${city}`,
+    host,
+    profile.role || 'Full Stack Developer',
+  ].filter((tok) => tok && !rawKeywords.toLowerCase().includes(tok.toLowerCase()));
+  const keywords = rawKeywords
+    ? [rawKeywords, ...extraTokens].join(', ')
+    : extraTokens.join(', ');
   const canonical = `${origin}/`;
   const image = absoluteMediaUrl(origin, content?.card?.portrait || profile.portrait);
 
@@ -409,6 +436,13 @@ function buildLiveHeadAndNoscript({ content, pathname }) {
         alternateName: [personName, `${personName} ${city}`, host],
         inLanguage: settings.language || 'id',
       },
+      {
+        '@type': 'ImageObject',
+        '@id': `${origin}/#primaryimage`,
+        url: image,
+        contentUrl: image,
+        caption: `Foto resmi ${personName} — ${profile.role || 'Full Stack Developer'}, ${city}`,
+      },
       personEntity,
       {
         '@type': 'ProfilePage',
@@ -416,6 +450,7 @@ function buildLiveHeadAndNoscript({ content, pathname }) {
         url: canonical,
         name: `Portofolio Resmi ${personName} — ${city}`,
         isPartOf: { '@id': `${origin}/#website` },
+        primaryImageOfPage: { '@id': `${origin}/#primaryimage` },
         mainEntity: { '@id': `${origin}/#person` },
       },
       ...(content?.projects?.length

@@ -49,10 +49,21 @@ export function SeoEditor({
   );
   const hasCustomPortrait = (content.card?.portrait || profile.portrait || '').startsWith('/uploads/');
 
+  const hasWeakCustomTitle =
+    Boolean(seoTitle.trim()) &&
+    (!seoTitle.toLowerCase().includes('portofolio') ||
+      !seoTitle.toLowerCase().includes(city.toLowerCase()));
+
   const checks = [
     {
       ok: Boolean(seoName.trim()) && seoLocation.toLowerCase().includes('parepare'),
-      text: `Entitas nama (${seoName || profile.name}) dan domisili lokal (${effectiveLocation}) aktif di Title, Schema Person, dan teks halaman.`,
+      text: `Entitas nama (${seoName || profile.name}) dan domisili lokal (${effectiveLocation}) aktif di Schema Person, deskripsi, dan teks halaman.`,
+    },
+    {
+      ok: !hasWeakCustomTitle,
+      text: !hasWeakCustomTitle
+        ? `Judul Google optimal ("${previewTitle}").`
+        : `Judul Google saat ini ("${seoTitle}") belum memuat kata "Portofolio" atau "${city}". Klik "Pakai judul otomatis SEO" di bawah agar lebih kuat saat dicari.`,
     },
     {
       ok: realSocialCount > 0,
@@ -71,7 +82,7 @@ export function SeoEditor({
     {
       ok: hasCustomPortrait,
       text: hasCustomPortrait
-        ? 'Foto profil kustom sudah terunggah (/uploads/...) dan langsung terpasang pada meta og:image & SSR.'
+        ? 'Foto profil kustom sudah terunggah (/uploads/...) dan langsung terpasang pada meta og:image, Image Sitemap, & SSR.'
         : 'Masih memakai foto bawaan (/images/portrait.webp). Unggah foto aslimu di tab Profil saya jika belum.',
     },
   ];
@@ -158,10 +169,22 @@ export function SeoEditor({
               <input
                 value={seoTitle}
                 maxLength={200}
-                placeholder={previewTitle}
+                placeholder={`Portofolio ${seoName || profile.name} — ${profile.role}, ${city} | ${host}`}
                 onChange={(event) => onChange({ ...value, seoTitle: event.target.value })}
               />
             </Field>
+            {seoTitle.trim() && (
+              <div className="admin-field wide">
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={() => onChange({ ...value, seoTitle: '' })}
+                >
+                  Pakai judul otomatis SEO (Portofolio {seoName || profile.name} — {profile.role},{' '}
+                  {city})
+                </button>
+              </div>
+            )}
             <Field
               label={`Deskripsi di Google (${seoDescription.length}/160 disarankan)`}
               hint="Kosongkan untuk otomatis memakai ringkasan profil + kota + keahlian."

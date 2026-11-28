@@ -190,9 +190,17 @@ export function syncSeoMetadata({
     const description =
       content.settings?.seoDescription?.trim() ||
       `Portofolio resmi ${personName}${alternateNames[0] ? ` (${alternateNames[0]})` : ''}, ${content.profile.role} berbasis di ${locationLabel}. ${content.profile.intro}`;
-    const keywords =
-      content.settings?.seoKeywords?.trim() ||
-      `${personName}, Portofolio ${personName}, ${personName} ${city}, ${host}, ${content.profile.role}`;
+    const rawKeywords = content.settings?.seoKeywords?.trim() || '';
+    const extraTokens = [
+      personName,
+      `Portofolio ${personName}`,
+      `${personName} ${city}`,
+      host,
+      content.profile.role || 'Full Stack Developer',
+    ].filter((tok) => tok && !rawKeywords.toLowerCase().includes(tok.toLowerCase()));
+    const keywords = rawKeywords
+      ? [rawKeywords, ...extraTokens].join(', ')
+      : extraTokens.join(', ');
     const image = absoluteMediaUrl(origin, content.card?.portrait || content.profile.portrait);
     const canonical = `${origin}/`;
 
@@ -239,6 +247,13 @@ export function syncSeoMetadata({
           alternateName: [personName, `${personName} ${city}`, host],
           inLanguage: content.settings?.language || 'id',
         },
+        {
+          '@type': 'ImageObject',
+          '@id': `${origin}/#primaryimage`,
+          url: image,
+          contentUrl: image,
+          caption: `Foto resmi ${personName} — ${content.profile.role}, ${city}`,
+        },
         personEntity,
         {
           '@type': 'ProfilePage',
@@ -246,6 +261,7 @@ export function syncSeoMetadata({
           url: canonical,
           name: `Portofolio Resmi ${personName} — ${city}`,
           isPartOf: { '@id': `${origin}/#website` },
+          primaryImageOfPage: { '@id': `${origin}/#primaryimage` },
           mainEntity: { '@id': `${origin}/#person` },
         },
         ...(content.projects.length

@@ -220,6 +220,8 @@ export async function createExpressApp({
           }
         : false,
       crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
     }),
   );
   app.use(express.json({ limit: '512kb' }));
@@ -619,7 +621,11 @@ export async function createExpressApp({
         maxAge: '1y',
         immutable: true,
         dotfiles: 'deny',
-        setHeaders: (res) => res.set('X-Content-Type-Options', 'nosniff'),
+        setHeaders: (res) => {
+          res.set('X-Content-Type-Options', 'nosniff');
+          res.set('Access-Control-Allow-Origin', '*');
+          res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+        },
       }),
     );
   } else if (storage.getUpload) {
@@ -632,6 +638,9 @@ export async function createExpressApp({
       if (!file) return res.status(404).end();
       const total = file.buffer.length;
       res.setHeader('Accept-Ranges', 'bytes');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
       res.setHeader('Content-Type', file.mime);
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
       res.setHeader('X-Content-Type-Options', 'nosniff');

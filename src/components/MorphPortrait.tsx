@@ -24,6 +24,8 @@ export default function MorphPortrait({
   priority?: boolean;
   parallax?: boolean;
 }) {
+  const effectiveAlternate =
+    src.startsWith('/uploads/') && alternate === '/images/portrait-symbiote.webp' ? '' : alternate;
   const ref = useRef<HTMLDivElement>(null);
   const revealed = useRef(false);
   const [pinned, setPinned] = useState(false);
@@ -78,12 +80,12 @@ export default function MorphPortrait({
         decoding="async"
         draggable="false"
       />
-      {alternate && (
+      {effectiveAlternate && (
         <>
           <img
             className="portrait-alternate"
             data-parallax={parallax || undefined}
-            src={alternate}
+            src={effectiveAlternate}
             alt=""
             aria-hidden="true"
             width="720"

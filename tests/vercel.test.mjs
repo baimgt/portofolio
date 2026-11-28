@@ -87,6 +87,8 @@ test('Vercel serverless handler handles rewritten /api and /uploads routes clean
     const fetchedImg = await fetch(`${base}/api?__path=${uploaded.body.url}`);
     assert.equal(fetchedImg.status, 200);
     assert.match(fetchedImg.headers.get('content-type'), /webp/);
+    assert.equal(fetchedImg.headers.get('cross-origin-resource-policy'), 'cross-origin');
+    assert.equal(fetchedImg.headers.get('access-control-allow-origin'), '*');
 
     const mp3Buf = Buffer.concat([
       Buffer.from('ID3\x04\x00\x00\x00\x00\x00\x00'),
@@ -131,7 +133,10 @@ test('Vercel serverless handler handles rewritten /api and /uploads routes clean
 
     const sitemapRes = await fetch(`${base}/api?__path=/sitemap.xml`);
     assert.equal(sitemapRes.status, 200);
-    assert.match(await sitemapRes.text(), /https:\/\/ibrahimabdullah\.biz\.id\//);
+    const sitemapXml = await sitemapRes.text();
+    assert.match(sitemapXml, /https:\/\/ibrahimabdullah\.biz\.id\//);
+    assert.match(sitemapXml, /<image:image>/);
+    assert.match(sitemapXml, /<image:loc>/);
 
     const llmsRes = await fetch(`${base}/api?__path=/llms.txt`);
     assert.equal(llmsRes.status, 200);

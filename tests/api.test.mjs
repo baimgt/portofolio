@@ -199,6 +199,8 @@ test('Portfolio API: authentication, persistence, project CRUD, uploads, and inb
       const image = await fetch(base + uploaded.body.url);
       assert.equal(image.status, 200);
       assert.match(image.headers.get('content-type'), /webp/);
+      assert.equal(image.headers.get('cross-origin-resource-policy'), 'cross-origin');
+      assert.equal(image.headers.get('access-control-allow-origin'), '*');
       const metadata = await sharp(Buffer.from(await image.arrayBuffer())).metadata();
       assert.equal(metadata.format, 'webp');
       const invalid = new FormData();

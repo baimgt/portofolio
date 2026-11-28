@@ -490,15 +490,23 @@ export default function Admin({
   const updateProfile = <K extends keyof Profile>(key: K, value: Profile[K]) => {
     setDraft((current) => {
       const nextCard = { ...current.card };
+      const nextProfile = { ...current.profile, [key]: value };
       if (syncCardPhoto && key === 'portrait') {
         nextCard.portrait = '';
+        if (
+          typeof value === 'string' &&
+          value.startsWith('/uploads/') &&
+          current.profile.portraitHover === '/images/portrait-symbiote.webp'
+        ) {
+          nextProfile.portraitHover = '';
+        }
       }
       if (syncCardPhoto && key === 'portraitHover') {
         nextCard.portraitHover = '';
       }
       return {
         ...current,
-        profile: { ...current.profile, [key]: value },
+        profile: nextProfile,
         card: nextCard,
       };
     });
@@ -1110,13 +1118,22 @@ export default function Admin({
                   )}
                   <Field
                     label="URL foto Black Suit profil"
-                    hint="Gunakan gambar dengan pose dan crop identik dengan foto profil."
+                    hint="Gunakan gambar dengan pose dan crop identik dengan foto profil, atau kosongkan agar foto tidak berubah saat disentuh."
                   >
                     <input
                       value={draft.profile.portraitHover}
                       onChange={(event) => updateProfile('portraitHover', event.target.value)}
                     />
                   </Field>
+                  {draft.profile.portraitHover && (
+                    <button
+                      type="button"
+                      className="text-button"
+                      onClick={() => updateProfile('portraitHover', '')}
+                    >
+                      Hapus foto Black Suit (matikan efek ganti foto saat hover)
+                    </button>
+                  )}
                   <div className="admin-form-grid">
                     <Field label="Nama lengkap">
                       <input
